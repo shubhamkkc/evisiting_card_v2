@@ -12,6 +12,7 @@ import GallerySection from "./GallerySection";
 import EnquiryForm from "./EnquiryForm";
 import ShareSection from "./ShareSection";
 import BottomNavBar from "./BottomNavBar";
+import InstallPWA from "./InstallPWA";
 
 // Adjust according to the Prisma schema TS definitions
 interface Business {
@@ -95,6 +96,9 @@ export default function BusinessCard({ business }: { business: Business }) {
 
         {/* 8. Share Section */}
         <ShareSection business={business} theme={theme} />
+
+        {/* 9. Install as App (PWA) */}
+        <InstallPWA theme={theme} />
       </div>
 
       {/* Sticky Bottom Nav */}

@@ -410,6 +410,7 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
                   <option value="tiktok">TikTok</option>
                   <option value="snapchat">Snapchat</option>
                   <option value="website">Personal Website</option>
+                  <option value="googlereview">Google Review Link</option>
                   <option value="other">Other Link</option>
                 </select>
                 <input 

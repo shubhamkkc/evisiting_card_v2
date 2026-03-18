@@ -9,7 +9,8 @@ import {
   Send, 
   Music, 
   Ghost,
-  Link
+  Link,
+  Star
 } from "lucide-react";
 
 export default function SocialLinks({ socialLinks, theme }: { socialLinks: any; theme: any }) {
@@ -25,6 +26,10 @@ export default function SocialLinks({ socialLinks, theme }: { socialLinks: any; 
       case "tiktok": return <Music className="w-5 h-5" />;
       case "snapchat": return <Ghost className="w-5 h-5" />;
       case "website": return <Globe className="w-5 h-5" />;
+      case "google":
+      case "googlereview":
+      case "review": 
+        return <Star className="w-5 h-5 text-yellow-500 fill-yellow-200" />;
       default: return <Link className="w-5 h-5" />;
     }
   };
