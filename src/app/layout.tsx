@@ -14,8 +14,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EVisitingCard — Digital Business Cards",
-  description: "Create and share your digital business card instantly. One link, infinite connections.",
+  title: {
+    default: "EVisitingCard — Digital Business Cards",
+    template: "%s | EVisitingCard",
+  },
+  description: "Create and share your digital business card instantly. One link, infinite connections. Professional, modern, and mobile-friendly.",
+  applicationName: "EVisitingCard",
+  authors: [{ name: "EVisitingCard Team" }],
+  keywords: ["digital business card", "vcard", "business card", "networking", "nfc card"],
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://evisitingcard.com",
+    siteName: "EVisitingCard",
+    title: "EVisitingCard — Digital Business Cards",
+    description: "The modern way to share your professional identity.",
+  },
 };
 
 export default function RootLayout({
