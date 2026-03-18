@@ -4,7 +4,7 @@ import BusinessCard from "@/components/card/BusinessCard";
 import { Metadata } from "next";
 
 interface Props {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
