@@ -21,6 +21,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${business.businessName} | Digital Business Card`,
     description: business.about?.substring(0, 160) || `Digital business card for ${business.businessName}`,
     manifest: `/api/${slug}/manifest`,
+    icons: {
+      icon: business.logo || "/favicon.ico",
+      apple: business.logo || "/favicon.ico",
+    },
     openGraph: {
       images: business.logo ? [business.logo] : [],
     },
