@@ -1,8 +1,10 @@
 import { ArrowRight, QrCode, Share2, Smartphone, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 
 export default function Home() {
+  const whatsappUrl =
+    "https://wa.me/918252744799?text=Hi%2C%20I%20want%20to%20create%20a%20digital%20business%20card%20for%20my%20business.";
+
   return (
     <div className="min-h-screen bg-white text-slate-900">
       {/* Navbar */}
@@ -15,11 +17,13 @@ export default function Home() {
               </span>
             </div>
             <div className="flex gap-4 items-center">
-              <Link href="/admin/login" className="text-sm font-medium text-gray-600 hover:text-gray-900">
-                Log In
-              </Link>
-              <Link href="#pricing" className="text-sm font-medium bg-blue-600 text-white px-4 py-2 rounded-full shadow-sm shadow-blue-500/30 hover:bg-blue-700 transition-colors">
-                Get Started
+              <Link
+                href={whatsappUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm font-medium bg-green-600 text-white px-4 py-2 rounded-full shadow-sm shadow-green-500/30 hover:bg-green-700 transition-colors"
+              >
+                Chat on WhatsApp
               </Link>
             </div>
           </div>
@@ -39,13 +43,18 @@ export default function Home() {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Business Card</span>
             </h1>
             <p className="text-xl text-gray-500 mb-10 max-w-2xl mx-auto font-medium">
-              Share your contact info, social links, products, and gallery instantly. No more printing paper cards. One link, infinite connections.
+              Message us on WhatsApp and we will create your digital business card for you. No public self-signup, just direct support and fast setup.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link href="/admin/login" className="px-8 py-4 bg-blue-600 text-white rounded-full font-bold text-lg shadow-xl shadow-blue-500/20 hover:bg-blue-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
-                Create Your Card <ArrowRight className="w-5 h-5" />
+              <Link
+                href={whatsappUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="px-8 py-4 bg-green-600 text-white rounded-full font-bold text-lg shadow-xl shadow-green-500/20 hover:bg-green-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-2"
+              >
+                Chat on WhatsApp <ArrowRight className="w-5 h-5" />
               </Link>
-              <Link href="/kanhaiya-lal-and-sons" className="px-8 py-4 bg-white text-gray-700 border-2 border-gray-200 rounded-full font-bold text-lg hover:border-blue-600 hover:text-blue-600 transition-colors flex items-center justify-center">
+              <Link href="/kanhaiya-lal-sons" className="px-8 py-4 bg-white text-gray-700 border-2 border-gray-200 rounded-full font-bold text-lg hover:border-blue-600 hover:text-blue-600 transition-colors flex items-center justify-center">
                 View Demos
               </Link>
             </div>
@@ -122,9 +131,9 @@ export default function Home() {
             <div className="grid md:grid-cols-3 gap-12 relative">
               <div className="hidden md:block absolute top-[60px] left-[15%] right-[15%] h-0.5 bg-gradient-to-r from-blue-100 via-blue-500 to-blue-100 z-0"></div>
               {[
-                { step: "01", title: "Fill Details", desc: "Add your contact info, social links, and about text." },
-                { step: "02", title: "Customize Design", desc: "Pick a theme and customize colors to match your brand." },
-                { step: "03", title: "Share Instantly", desc: "Start sharing via your unique link or scan your QR code." }
+                { step: "01", title: "Message on WhatsApp", desc: "Send us your business name, contact details, logo, and photos." },
+                { step: "02", title: "We Build Your Card", desc: "We create the design, add your branding, and set up your custom card." },
+                { step: "03", title: "Start Sharing", desc: "Once ready, you receive your live link and QR code to share instantly." }
               ].map((s, i) => (
                 <div key={i} className="relative z-10 flex flex-col items-center text-center">
                   <div className="w-24 h-24 rounded-full bg-white border-8 border-gray-50 shadow-md flex items-center justify-center text-2xl font-black text-blue-600 mb-6">
@@ -159,7 +168,14 @@ export default function Home() {
                       </li>
                     ))}
                   </ul>
-                  <Link href="/admin/login" className="w-full py-4 rounded-xl font-bold bg-gray-800 hover:bg-gray-700 transition block text-center">Get Basic</Link>
+                  <Link
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-4 rounded-xl font-bold bg-green-600 hover:bg-green-700 transition block text-center"
+                  >
+                    Contact on WhatsApp
+                  </Link>
                </div>
                <div className="bg-gradient-to-b from-blue-600 to-blue-900 border border-blue-500 rounded-3xl p-8 flex flex-col relative shadow-2xl shadow-blue-900/50 transform md:-translate-y-4">
                   <div className="absolute top-0 right-8 transform -translate-y-1/2 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Most Popular</div>
@@ -174,7 +190,14 @@ export default function Home() {
                       </li>
                     ))}
                   </ul>
-                  <Link href="/admin/login" className="w-full py-4 rounded-xl font-bold bg-white text-blue-900 hover:bg-gray-50 transition shadow-xl block text-center">Get Pro Business</Link>
+                  <Link
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-4 rounded-xl font-bold bg-white text-blue-900 hover:bg-gray-50 transition shadow-xl block text-center"
+                  >
+                    Contact on WhatsApp
+                  </Link>
                </div>
             </div>
           </div>

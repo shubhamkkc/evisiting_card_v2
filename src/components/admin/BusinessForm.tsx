@@ -52,6 +52,7 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
       phone: "", whatsapp: "", email: "", website: "", address: "",
       googleMapsUrl: "", logo: "", coverPhoto: "", about: "", category: "",
       yearEstd: "", theme: "theme1", themeColor: "#0ea5e9", isActive: true,
+      ownerEmail: "", ownerPassword: "",
       socialLinks: [
         { platform: "facebook", url: "" },
         { platform: "instagram", url: "" }
@@ -198,13 +199,22 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
     const { id, createdAt, updatedAt, ...updatableData } = formData;
 
     // Format complex objects to strings for Prisma
-    const submitData = {
+    const submitData: any = {
       ...updatableData,
       slug: (formData.slug || "").toLowerCase().replace(/\s+/g, '-'),
       socialLinks: JSON.stringify(formData.socialLinks || []),
       services: JSON.stringify(formData.services || []),
       gallery: JSON.stringify(formData.gallery || []),
     };
+
+    // Only include ownerPassword if it was entered (admin is setting/changing it)
+    if (!submitData.ownerPassword) {
+      delete submitData.ownerPassword;
+    }
+    // Remove empty ownerEmail
+    if (!submitData.ownerEmail) {
+      submitData.ownerEmail = null;
+    }
 
     try {
       const res = await fetch(isEditing ? `/api/businesses/${id}` : "/api/businesses", {
@@ -476,6 +486,59 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
           </div>
 
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Year Established</label><input type="text" className="block w-full rounded-lg border-gray-300 px-4 py-2 border outline-none focus:ring-2 focus:ring-blue-500" value={formData.yearEstd} onChange={e => setFormData({...formData, yearEstd: e.target.value})} placeholder="e.g. 1995" /></div>
+
+          {/* Owner Access Section */}
+          <div className="md:col-span-2 border-b border-gray-100 pb-4 mb-2 mt-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-violet-100 rounded-lg flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Owner Access</h2>
+                <p className="text-sm text-gray-400">Set login credentials so the business owner can edit their own card</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Owner Login Email</label>
+            <input
+              type="email"
+              className="block w-full rounded-lg border-gray-300 px-4 py-2 border outline-none focus:ring-2 focus:ring-violet-500"
+              placeholder="owner@business.com"
+              value={formData.ownerEmail || ""}
+              onChange={e => setFormData({...formData, ownerEmail: e.target.value})}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {isEditing ? "New Password (leave blank to keep current)" : "Owner Password"}
+            </label>
+            <input
+              type="text"
+              className="block w-full rounded-lg border-gray-300 px-4 py-2 border outline-none focus:ring-2 focus:ring-violet-500 font-mono"
+              placeholder={isEditing ? "Enter new password to change..." : "Set a secure password"}
+              value={formData.ownerPassword || ""}
+              onChange={e => setFormData({...formData, ownerPassword: e.target.value})}
+            />
+          </div>
+
+          {(formData.ownerEmail) && (
+            <div className="md:col-span-2 bg-violet-50 border border-violet-100 rounded-xl px-4 py-3 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-violet-700">Owner Login Link</p>
+                <p className="text-xs text-violet-500 mt-0.5">Share this URL with the business owner</p>
+              </div>
+              <a
+                href={`${typeof window !== 'undefined' ? window.location.origin : ''}/owner/login`}
+                target="_blank"
+                className="text-sm font-mono text-violet-600 hover:underline bg-white px-3 py-1.5 rounded-lg border border-violet-200"
+              >
+                /owner/login
+              </a>
+            </div>
+          )}
 
         </div>
 

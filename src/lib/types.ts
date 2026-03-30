@@ -1,27 +1,26 @@
-export interface SocialLinks {
-  facebook?: string;
-  instagram?: string;
-  linkedin?: string;
-  youtube?: string;
-  twitter?: string;
+import NextAuth from "next-auth";
+
+declare module "next-auth" {
+  interface User {
+    role?: string;
+    businessId?: string;
+  }
+  interface Session {
+    user: {
+      id?: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+      role?: string;
+      businessId?: string;
+    };
+  }
 }
 
-export interface Service {
-  title: string;
-  image: string;
-  description: string;
-}
-
-export interface GalleryItem {
-  url: string;
-}
-
-export interface PlaceResult {
-  name: string;
-  phone?: string;
-  address?: string;
-  website?: string;
-  googleMapsUrl?: string;
-  placeId: string;
-  photoReference?: string;
+declare module "next-auth/jwt" {
+  interface JWT {
+    id?: string;
+    role?: string;
+    businessId?: string;
+  }
 }
