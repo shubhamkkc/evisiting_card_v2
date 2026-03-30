@@ -1,6 +1,6 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
+import * as bcrypt from "bcryptjs";
 import prisma from "@/lib/prisma";
 
 export const authOptions: NextAuthOptions = {
@@ -23,7 +23,8 @@ export const authOptions: NextAuthOptions = {
         }
 
         // --- Check Business Owner ---
-        const business = await prisma.business.findUnique({
+        // Use type assertion to handle out-of-sync Prisma types
+        const business = await (prisma.business as any).findUnique({
           where: { ownerEmail: credentials.email },
         });
 
