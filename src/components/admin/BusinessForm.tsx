@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { Search, Loader2, Image as ImageIcon, Upload, Plus, Trash2, Facebook, Instagram, Twitter, Linkedin, Youtube, Globe, MapPin } from "lucide-react";
+import imageCompression from "browser-image-compression";
 
 export default function BusinessForm({ initialData }: { initialData?: any }) {
   const router = useRouter();
@@ -65,8 +66,14 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
   const handleFileUpload = async (file: File, type: 'logo' | 'coverPhoto' | 'gallery') => {
     setUploading(type);
     try {
+      const options = {
+        maxSizeMB: 0.5,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+      };
+      const compressedFile = await imageCompression(file, options);
       const body = new FormData();
-      body.append("file", file);
+      body.append("file", compressedFile);
       const res = await fetch("/api/upload", { method: "POST", body });
       const data = await res.json();
       
@@ -101,8 +108,14 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
     const uploadKey = `service-${index}`;
     setUploading(uploadKey);
     try {
+      const options = {
+        maxSizeMB: 0.5,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+      };
+      const compressedFile = await imageCompression(file, options);
       const body = new FormData();
-      body.append("file", file);
+      body.append("file", compressedFile);
       const res = await fetch("/api/upload", { method: "POST", body });
       const data = await res.json();
       

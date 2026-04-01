@@ -13,6 +13,7 @@ import EnquiryForm from "./EnquiryForm";
 import ShareSection from "./ShareSection";
 import BottomNavBar from "./BottomNavBar";
 import InstallPWA from "./InstallPWA";
+import Link from "next/link";
 
 // Adjust according to the Prisma schema TS definitions
 interface Business {
@@ -99,6 +100,23 @@ export default function BusinessCard({ business }: { business: Business }) {
 
         {/* 9. Install as App (PWA) */}
         <InstallPWA theme={theme} />
+
+        {/* 10. Footer Branding (Homepage Link) */}
+        <div className="pt-12 pb-8 text-center border-t border-gray-100">
+          <p className="text-gray-400 text-[11px] mb-4 uppercase tracking-[0.2em] font-bold">
+            Create your own digital card
+          </p>
+          <Link 
+            href="/" 
+            className={`inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-extrabold transition-all hover:scale-105 active:scale-95 shadow-lg ${theme.accentBg}`}
+          >
+            Get Started Now
+          </Link>
+          <div className="mt-8 flex flex-col items-center gap-1 opacity-40">
+            <span className="text-[10px] uppercase font-medium tracking-widest">Powered by</span>
+            <span className="text-sm font-black tracking-tight">EVisitingCard</span>
+          </div>
+        </div>
       </div>
 
       {/* Sticky Bottom Nav */}
