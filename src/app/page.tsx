@@ -1,5 +1,6 @@
 import { ArrowRight, QrCode, Share2, Smartphone, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import AutoScrollingIframe from "@/components/AutoScrollingIframe";
 
 export default function Home() {
   const whatsappUrl =
@@ -54,7 +55,7 @@ export default function Home() {
               >
                 Chat on WhatsApp <ArrowRight className="w-5 h-5" />
               </Link>
-              <Link href="/kanhaiya-lal-sons" className="px-8 py-4 bg-white text-gray-700 border-2 border-gray-200 rounded-full font-bold text-lg hover:border-blue-600 hover:text-blue-600 transition-colors flex items-center justify-center">
+              <Link href="#demos" className="px-8 py-4 bg-white text-gray-700 border-2 border-gray-200 rounded-full font-bold text-lg hover:border-blue-600 hover:text-blue-600 transition-colors flex items-center justify-center">
                 View Demos
               </Link>
             </div>
@@ -62,38 +63,62 @@ export default function Home() {
           
           {/* Mock Graphic */}
           <div className="mt-20 relative max-w-5xl mx-auto">
-            <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent z-10 bottom-0 top-1/2"></div>
             <div className="flex justify-center gap-8 items-end relative perspective-[1000px]">
-              <div className="w-[280px] h-[580px] bg-slate-100 rounded-[2.5rem] p-2 border-[6px] border-slate-800 shadow-2xl rotate-[-5deg] translate-y-12">
+              <Link href="/snehaa-mehndi-art" className="block w-[280px] h-[580px] bg-slate-100 rounded-[2.5rem] p-2 border-[6px] border-slate-800 shadow-2xl transform rotate-[-5deg] translate-y-12 hover:-rotate-1 hover:translate-y-6 hover:scale-105 transition-all duration-300 z-10 hover:z-30 cursor-pointer">
                 <div className="w-full h-full bg-white rounded-[2rem] overflow-hidden relative shadow-inner">
-                  {/* Mock Theme 1 */}
-                  <div className="h-24 bg-blue-600"></div>
-                  <div className="w-16 h-16 bg-white border-4 border-white rounded-full mx-auto -mt-8"></div>
-                  <div className="mt-6 flex gap-2 justify-center px-4"><div className="w-8 h-8 rounded-full bg-blue-100"></div><div className="w-8 h-8 rounded-full bg-blue-100"></div><div className="w-8 h-8 rounded-full bg-blue-100"></div></div>
-                  <div className="mt-6 space-y-2 px-6"><div className="h-3 bg-gray-100 rounded"></div><div className="h-3 bg-gray-100 rounded w-2/3"></div><div className="h-20 bg-gray-50 rounded-xl mt-4"></div></div>
+                  <AutoScrollingIframe src="/snehaa-mehndi-art" title="Snehaa Mehndi Art Preview" />
                 </div>
-              </div>
-              <div className="w-[320px] h-[640px] bg-slate-900 rounded-[2.5rem] p-2 border-[6px] border-slate-800 shadow-3xl z-20">
-                <div className="w-full h-full bg-gray-950 rounded-[2rem] overflow-hidden relative shadow-inner">
-                   {/* Mock Theme 2 */}
-                   <div className="h-32 bg-gray-900"></div>
-                  <div className="w-20 h-20 bg-gray-800 border-4 border-gray-950 rounded-full mx-auto -mt-10"></div>
-                  <div className="mt-10 flex gap-3 justify-center px-4"><div className="w-12 h-12 rounded-full bg-blue-600/20"></div><div className="w-12 h-12 rounded-full bg-blue-600/20"></div><div className="w-12 h-12 rounded-full bg-blue-600/20"></div><div className="w-12 h-12 rounded-full bg-blue-600/20"></div></div>
-                  <div className="mt-8 space-y-3 px-6"><div className="h-4 bg-gray-800 rounded"></div><div className="h-4 bg-gray-800 rounded w-3/4"></div><div className="h-32 bg-gray-800/50 rounded-2xl mt-6"></div></div>
+              </Link>
+              <Link href="/kanhaiya-lal-sons" className="block w-[320px] h-[640px] bg-slate-900 rounded-[2.5rem] p-2 border-[6px] border-slate-800 shadow-3xl z-20 hover:-translate-y-4 hover:scale-105 transition-all duration-300 hover:z-30 cursor-pointer">
+                <div className="w-full h-full bg-white rounded-[2rem] overflow-hidden relative shadow-inner">
+                  <AutoScrollingIframe src="/kanhaiya-lal-sons" title="Kanhaiya Lal & Sons Preview" />
                 </div>
-              </div>
-              <div className="hidden sm:block w-[280px] h-[580px] bg-slate-100 rounded-[2.5rem] p-2 border-[6px] border-slate-800 shadow-2xl rotate-[5deg] translate-y-12">
-              <div className="w-full h-full bg-gradient-to-b from-purple-50 to-white rounded-[2rem] overflow-hidden relative shadow-inner">
-                  {/* Mock Theme 3 */}
-                  <div className="h-24 bg-gradient-to-r from-purple-600 to-pink-500"></div>
-                  <div className="w-16 h-16 bg-white border-4 border-white rounded-full mx-auto -mt-8"></div>
-                  <div className="mt-6 flex gap-2 justify-center px-4"><div className="w-10 h-10 rounded-2xl bg-white shadow-sm"></div><div className="w-10 h-10 rounded-2xl bg-white shadow-sm"></div><div className="w-10 h-10 rounded-2xl bg-white shadow-sm"></div></div>
-                  <div className="mt-6 space-y-2 px-6"><div className="h-3 bg-purple-100 rounded"></div><div className="h-3 bg-purple-100 rounded w-2/3"></div><div className="h-24 bg-white shadow-sm border border-purple-50 rounded-2xl mt-4"></div></div>
+              </Link>
+              <Link href="/brothersdigitaldentalart" className="hidden sm:block w-[280px] h-[580px] bg-slate-100 rounded-[2.5rem] p-2 border-[6px] border-slate-800 shadow-2xl transform rotate-[5deg] translate-y-12 hover:rotate-1 hover:translate-y-6 hover:scale-105 transition-all duration-300 z-10 hover:z-30 cursor-pointer">
+                <div className="w-full h-full bg-white rounded-[2rem] overflow-hidden relative shadow-inner">
+                  <AutoScrollingIframe src="/brothersdigitaldentalart" title="Brothers Digital Dental Art Preview" />
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
         </section>
+
+        {/* Live Demos */}
+        {/* <section id="demos" className="py-24 bg-white">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-16">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-100 text-green-600 text-sm font-medium mb-4">
+                <span className="flex h-2 w-2 rounded-full bg-green-600 animate-pulse"></span>
+                Live Examples
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">See EVisitingCard in action</h2>
+              <p className="text-gray-600 text-lg">Check out these real digital business cards proudly powered by us.</p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                { name: "Snehaa Mehndi Art", slug: "snehaa-mehndi-art", category: "Artist / Service", color: "from-pink-500 to-rose-500" },
+                { name: "Kanhaiya Lal & Sons", slug: "kanhaiya-lal-sons", category: "Jewellery", color: "from-amber-500 to-orange-500" },
+                { name: "Brothers Digital Dental Art", slug: "brothersdigitaldentalart", category: "Dental Clinic", color: "from-blue-500 to-cyan-500" }
+              ].map((demo, i) => (
+                <Link key={i} href={`/${demo.slug}`} className="group block overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-blue-100 transition-all duration-300">
+                  <div className={`h-32 bg-gradient-to-r ${demo.color} relative`}>
+                     <div className="absolute -bottom-8 left-6 w-16 h-16 bg-white rounded-2xl shadow-md flex items-center justify-center border-4 border-white overflow-hidden text-2xl font-black text-gray-300">
+                        {demo.name.charAt(0)}
+                     </div>
+                  </div>
+                  <div className="pt-12 pb-8 px-6">
+                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{demo.name}</h3>
+                    <p className="text-gray-500 mt-1">{demo.category}</p>
+                    <div className="mt-6 flex items-center text-blue-600 font-medium text-sm group-hover:translate-x-1 transition-transform">
+                      View Digital Card <ArrowRight className="w-4 h-4 ml-1" />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section> */}
 
         {/* Features */}
         <section className="py-24 bg-gray-50 pb-32">

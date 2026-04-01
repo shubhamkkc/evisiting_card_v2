@@ -294,11 +294,22 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
                   </button>
                 </div>
               ))}
-              <label style={{ cursor: "pointer", aspectRatio: "1", borderRadius: "10px", border: "2px dashed #e2e8f0", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: "11px", fontWeight: 600 }}>
-                <Plus style={{ width: "20px", height: "20px", marginBottom: "4px" }} />
-                Add
-                <input type="file" style={{ display: "none" }} multiple accept="image/*" onChange={e => { if (e.target.files) Array.from(e.target.files).forEach(f => handleFileUpload(f, "gallery")); }} />
-              </label>
+              {(!formData.gallery || formData.gallery.length < 30) && (
+                <label style={{ cursor: "pointer", aspectRatio: "1", borderRadius: "10px", border: "2px dashed #e2e8f0", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: "11px", fontWeight: 600 }}>
+                  <Plus style={{ width: "20px", height: "20px", marginBottom: "4px" }} />
+                  Add
+                  <input type="file" style={{ display: "none" }} multiple accept="image/*" onChange={e => { 
+                    if (e.target.files) {
+                      const remaining = 30 - (formData.gallery?.length || 0);
+                      const files = Array.from(e.target.files);
+                      if (files.length > remaining) {
+                        toast.error(`You can only add ${remaining} more image(s). Maximum 30 allowed.`);
+                      }
+                      files.slice(0, remaining).forEach(f => handleFileUpload(f, "gallery"));
+                    }
+                  }} />
+                </label>
+              )}
             </div>
           </div>
         </section>
@@ -346,10 +357,12 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
         <section style={{ background: "white", borderRadius: "16px", padding: "24px", border: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9" }}>
             <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", margin: 0 }}>Services & Products</h2>
-            <button type="button" onClick={() => setFormData((prev: any) => ({ ...prev, services: [...(prev.services || []), { title: "", description: "", image: "" }] }))}
-              style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "13px", fontWeight: 600, color: "#0ea5e9", background: "none", border: "1px solid #bae6fd", borderRadius: "8px", padding: "6px 12px", cursor: "pointer" }}>
-              <Plus style={{ width: "14px", height: "14px" }} /> Add Service
-            </button>
+            {(!formData.services || formData.services.length < 10) && (
+              <button type="button" onClick={() => setFormData((prev: any) => ({ ...prev, services: [...(prev.services || []), { title: "", description: "", image: "" }] }))}
+                style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "13px", fontWeight: 600, color: "#0ea5e9", background: "none", border: "1px solid #bae6fd", borderRadius: "8px", padding: "6px 12px", cursor: "pointer" }}>
+                <Plus style={{ width: "14px", height: "14px" }} /> Add Service
+              </button>
+            )}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {formData.services?.map((service: any, i: number) => (

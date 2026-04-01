@@ -92,6 +92,10 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
   };
 
   const addService = () => {
+    if (formData.services?.length >= 10) {
+      toast.error("You can only add up to 10 products & services.");
+      return;
+    }
     setFormData((prev: any) => ({
       ...prev,
       services: [...(prev.services || []), { title: "", description: "", image: "" }]
@@ -396,15 +400,22 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
                   </button>
                 </div>
               ))}
-              <label className="cursor-pointer aspect-square rounded-lg border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-all">
-                 <Plus className="w-6 h-6 mb-1" />
-                 <span className="text-[10px] uppercase font-bold tracking-wider">Add</span>
-                 <input type="file" className="hidden" multiple accept="image/*" onChange={e => {
-                   if (e.target.files) {
-                     Array.from(e.target.files).forEach(file => handleFileUpload(file, 'gallery'));
-                   }
-                 }} />
-              </label>
+              {(!formData.gallery || formData.gallery.length < 30) && (
+                <label className="cursor-pointer aspect-square rounded-lg border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-all">
+                   <Plus className="w-6 h-6 mb-1" />
+                   <span className="text-[10px] uppercase font-bold tracking-wider">Add</span>
+                   <input type="file" className="hidden" multiple accept="image/*" onChange={e => {
+                     if (e.target.files) {
+                       const remaining = 30 - (formData.gallery?.length || 0);
+                       const files = Array.from(e.target.files);
+                       if (files.length > remaining) {
+                         toast.error(`You can only add ${remaining} more image(s). Maximum 30 allowed.`);
+                       }
+                       files.slice(0, remaining).forEach(file => handleFileUpload(file, 'gallery'));
+                     }
+                   }} />
+                </label>
+              )}
             </div>
           </div>
 
@@ -455,9 +466,11 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
 
           <div className="md:col-span-2 border-b border-gray-100 pb-4 mb-2 mt-4 flex items-center justify-between">
             <h2 className="text-lg font-bold text-gray-900">Services & Products</h2>
-            <button type="button" onClick={addService} className="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
-              <Plus className="w-4 h-4" /> Add Service
-            </button>
+            {(!formData.services || formData.services.length < 10) && (
+              <button type="button" onClick={addService} className="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                <Plus className="w-4 h-4" /> Add Service
+              </button>
+            )}
           </div>
 
           <div className="md:col-span-2 space-y-4">

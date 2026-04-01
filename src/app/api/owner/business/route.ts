@@ -45,6 +45,24 @@ export async function PUT(req: Request) {
       }
     }
 
+    // Validate limits (30 gallery images, 10 services)
+    try {
+      if (safeData.gallery) {
+        const parsedGallery = JSON.parse(safeData.gallery);
+        if (Array.isArray(parsedGallery) && parsedGallery.length > 30) {
+          return NextResponse.json({ error: "Maximum of 30 gallery images allowed." }, { status: 400 });
+        }
+      }
+      if (safeData.services) {
+        const parsedServices = JSON.parse(safeData.services);
+        if (Array.isArray(parsedServices) && parsedServices.length > 10) {
+          return NextResponse.json({ error: "Maximum of 10 products & services allowed." }, { status: 400 });
+        }
+      }
+    } catch (e) {
+      return NextResponse.json({ error: "Invalid JSON format for gallery or services." }, { status: 400 });
+    }
+
     const updated = await prisma.business.update({
       where: { id: businessId },
       data: safeData,
