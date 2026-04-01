@@ -63,18 +63,18 @@ export default function Home() {
           
           {/* Mock Graphic */}
           <div className="mt-20 relative max-w-5xl mx-auto">
-            <div className="flex justify-center gap-8 items-end relative perspective-[1000px]">
-              <Link href="/snehaa-mehndi-art" className="block w-[280px] h-[580px] bg-slate-100 rounded-[2.5rem] p-2 border-[6px] border-slate-800 shadow-2xl transform rotate-[-5deg] translate-y-12 hover:-rotate-1 hover:translate-y-6 hover:scale-105 transition-all duration-300 z-10 hover:z-30 cursor-pointer">
+            <div className="flex flex-col md:flex-row justify-center gap-12 md:gap-8 items-center md:items-end relative perspective-[1000px]">
+              <Link href="/snehaa-mehndi-art" className="block w-full max-w-[280px] h-[580px] md:w-[280px] bg-slate-100 rounded-[2.5rem] p-2 border-[6px] border-slate-800 shadow-2xl transform md:rotate-[-5deg] md:translate-y-12 md:hover:-rotate-1 md:hover:translate-y-6 md:hover:scale-105 transition-all duration-300 z-10 hover:z-30 cursor-pointer">
                 <div className="w-full h-full bg-white rounded-[2rem] overflow-hidden relative shadow-inner">
                   <AutoScrollingIframe src="/snehaa-mehndi-art" title="Snehaa Mehndi Art Preview" />
                 </div>
               </Link>
-              <Link href="/kanhaiya-lal-sons" className="block w-[320px] h-[640px] bg-slate-900 rounded-[2.5rem] p-2 border-[6px] border-slate-800 shadow-3xl z-20 hover:-translate-y-4 hover:scale-105 transition-all duration-300 hover:z-30 cursor-pointer">
+              <Link href="/kanhaiya-lal-sons" className="block w-full max-w-[320px] h-[640px] md:w-[320px] bg-slate-900 rounded-[2.5rem] p-2 border-[6px] border-slate-800 shadow-3xl z-20 md:hover:-translate-y-4 md:hover:scale-105 transition-all duration-300 hover:z-30 cursor-pointer">
                 <div className="w-full h-full bg-white rounded-[2rem] overflow-hidden relative shadow-inner">
                   <AutoScrollingIframe src="/kanhaiya-lal-sons" title="Kanhaiya Lal & Sons Preview" />
                 </div>
               </Link>
-              <Link href="/brothersdigitaldentalart" className="hidden sm:block w-[280px] h-[580px] bg-slate-100 rounded-[2.5rem] p-2 border-[6px] border-slate-800 shadow-2xl transform rotate-[5deg] translate-y-12 hover:rotate-1 hover:translate-y-6 hover:scale-105 transition-all duration-300 z-10 hover:z-30 cursor-pointer">
+              <Link href="/brothersdigitaldentalart" className="block w-full max-w-[280px] h-[580px] md:w-[280px] bg-slate-100 rounded-[2.5rem] p-2 border-[6px] border-slate-800 shadow-2xl transform md:rotate-[5deg] md:translate-y-12 md:hover:rotate-1 md:hover:translate-y-6 md:hover:scale-105 transition-all duration-300 z-10 hover:z-30 cursor-pointer">
                 <div className="w-full h-full bg-white rounded-[2rem] overflow-hidden relative shadow-inner">
                   <AutoScrollingIframe src="/brothersdigitaldentalart" title="Brothers Digital Dental Art Preview" />
                 </div>
@@ -180,38 +180,28 @@ export default function Home() {
               <p className="text-gray-400">Upgrade your networking game forever.</p>
             </div>
             
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-               <div className="bg-gray-900 border border-gray-800 rounded-3xl p-8 flex flex-col">
-                  <h3 className="text-2xl font-bold mb-2">Basic</h3>
-                  <p className="text-gray-400 mb-6">Perfect for individuals</p>
-                  <div className="text-4xl font-black mb-8">₹499<span className="text-lg text-gray-500 font-medium">/year</span></div>
-                  <ul className="space-y-4 mb-8 flex-1">
-                    {['1 Custom Digital Card Link', 'All Contact Fields', 'Social Media Links', 'vCard Download', 'Dynamic QR Code'].map((c, i) => (
-                      <li key={i} className="flex gap-3 text-gray-300">
-                        <CheckCircle2 className="w-5 h-5 text-blue-500 shrink-0" />
-                        {c}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    href={whatsappUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full py-4 rounded-xl font-bold bg-green-600 hover:bg-green-700 transition block text-center"
-                  >
-                    Contact on WhatsApp
-                  </Link>
-               </div>
-               <div className="bg-gradient-to-b from-blue-600 to-blue-900 border border-blue-500 rounded-3xl p-8 flex flex-col relative shadow-2xl shadow-blue-900/50 transform md:-translate-y-4">
+            <div className="max-w-lg mx-auto">
+               <div className="bg-gradient-to-b from-blue-600 to-blue-900 border border-blue-500 rounded-3xl p-8 flex flex-col relative shadow-2xl shadow-blue-900/50">
                   <div className="absolute top-0 right-8 transform -translate-y-1/2 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Most Popular</div>
-                  <h3 className="text-2xl font-bold mb-2">Pro Business</h3>
-                  <p className="text-blue-200 mb-6">For professionals & businesses</p>
-                  <div className="text-4xl font-black mb-8">₹999<span className="text-lg text-blue-200 font-medium">/year</span></div>
+                  <h3 className="text-2xl font-bold mb-2">Standard</h3>
+                  <p className="text-blue-200 mb-6">Everything you need to grow your business</p>
+                  <div className="text-4xl font-black mb-8">₹499<span className="text-lg text-blue-200 font-medium">/year</span></div>
                   <ul className="space-y-4 mb-8 flex-1">
-                    {['Everything in Basic', 'Product & Services Catalog', 'Image Gallery', 'Customer Enquiry Form', '3 Premium Themes', 'NFC Card Integration'].map((c, i) => (
-                      <li key={i} className="flex gap-3 text-blue-50">
-                        <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
-                        {c}
+                    {[
+                      '1 Custom Digital Card Link',
+                      'All Contact Fields',
+                      'Social Media Links',
+                      'vCard Download',
+                      'Dynamic QR Code',
+                      'Product & Services Catalog (up to 10 services)',
+                      'Image Gallery (up to 30 images)',
+                      'Customer Enquiry Form',
+                      'Premium Themes',
+                      'NFC Card Integration'
+                    ].map((c, i) => (
+                      <li key={i} className="flex gap-3 text-blue-50 items-start">
+                        <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
+                        <span>{c}</span>
                       </li>
                     ))}
                   </ul>
