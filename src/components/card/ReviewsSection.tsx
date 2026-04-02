@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-export default function ReviewsSection({ business }: { business: any }) {
+export default function ReviewsSection({ business, theme }: { business: any; theme: any }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
