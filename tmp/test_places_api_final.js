@@ -1,5 +1,5 @@
 const fs = require('fs');
-const GOOGLE_PLACES_API_KEY = "AIzaSyAkCXJtQwiT4IVlSNAvW5v41u2RopokZ8c";
+const GOOGLE_PLACES_API_KEY = "[ENCRYPTION_KEY]";
 const query = 'restaurant in Delhi';
 const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${GOOGLE_PLACES_API_KEY}`;
 

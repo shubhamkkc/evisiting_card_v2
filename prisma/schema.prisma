@@ -19,8 +19,9 @@ model Business {
   website       String?
   address       String?
   googleMapsUrl String?
-  googlePlaceId String?
-  logo          String?
+  googlePlaceId      String?
+  googleReviewWidget String?
+  logo               String?
   coverPhoto    String?
   about         String?
   category      String?

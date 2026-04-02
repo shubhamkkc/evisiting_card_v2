@@ -197,6 +197,7 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
           phone: prev.phone ? prev.phone : (data.phone || ""),
           website: prev.website || data.website || "",
           googleMapsUrl: prev.googleMapsUrl || data.googleMapsUrl || "",
+          googlePlaceId: prev.googlePlaceId || data.placeId || placeId,
         }));
         toast.success("Details auto-filled from Google Maps!");
         setPlacesResults([]);
@@ -328,6 +329,8 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
           
           <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700 mb-1">Address</label><textarea rows={3} className="block w-full rounded-lg border-gray-300 px-4 py-2 border outline-none focus:ring-2 focus:ring-blue-500" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} /></div>
           <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700 mb-1">Google Maps URL</label><input type="url" className="block w-full rounded-lg border-gray-300 px-4 py-2 border outline-none focus:ring-2 focus:ring-blue-500" value={formData.googleMapsUrl} onChange={e => setFormData({...formData, googleMapsUrl: e.target.value})} /></div>
+          
+          <div className="md:col-span-2"><label className="block text-sm font-medium text-gray-700 mb-1">Google Review Widget Code (e.g. Elfsight)</label><textarea rows={3} placeholder="Paste your 3rd-party widget iframe/script here..." className="block w-full rounded-lg border-gray-300 px-4 py-2 border outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm" value={formData.googleReviewWidget || ""} onChange={e => setFormData({...formData, googleReviewWidget: e.target.value})} /></div>
           
           <div className="md:col-span-2 border-b border-gray-100 pb-4 mb-2 mt-4">
             <h2 className="text-lg font-bold text-gray-900">Theme Details</h2>

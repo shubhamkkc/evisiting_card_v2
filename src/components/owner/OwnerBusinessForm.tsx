@@ -221,6 +221,10 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
               <label style={labelStyle}>Google Maps URL</label>
               <input type="url" style={inputStyle} value={formData.googleMapsUrl || ""} onChange={e => setFormData({ ...formData, googleMapsUrl: e.target.value })} placeholder="https://maps.google.com/..." />
             </div>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <label style={labelStyle}>Google Review Widget Code (e.g. Elfsight)</label>
+              <textarea rows={3} style={{ ...inputStyle, resize: "vertical", fontFamily: "monospace", fontSize: "12px" }} value={formData.googleReviewWidget || ""} onChange={e => setFormData({ ...formData, googleReviewWidget: e.target.value })} placeholder="Paste your 3rd-party widget iframe/script here..." />
+            </div>
           </div>
         </section>
 

@@ -9,6 +9,7 @@ import SocialLinks from "./SocialLinks";
 import AboutSection from "./AboutSection";
 import ServicesSection from "./ServicesSection";
 import GallerySection from "./GallerySection";
+import ReviewsSection from "./ReviewsSection";
 import EnquiryForm from "./EnquiryForm";
 import ShareSection from "./ShareSection";
 import BottomNavBar from "./BottomNavBar";
@@ -91,6 +92,9 @@ export default function BusinessCard({ business }: { business: Business }) {
             onImageClick={(url: string) => setSelectedImage(url)}
           />
         )}
+
+        {/* Google Reviews Widget */}
+        <ReviewsSection business={business} theme={theme} />
 
         {/* 7. Enquiry Form */}
         <EnquiryForm business={business} theme={theme} />
