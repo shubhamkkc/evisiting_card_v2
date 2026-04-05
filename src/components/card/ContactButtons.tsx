@@ -53,19 +53,31 @@ export default function ContactButtons({ business, theme }: { business: any; the
   });
 
   return (
-    <div className="flex overflow-x-auto gap-4 py-2 hide-scrollbar snap-x snap-mandatory px-2">
+    <div className={theme.isTheme4 
+      ? "grid grid-cols-5 gap-2 px-2" 
+      : "flex overflow-x-auto gap-4 py-2 hide-scrollbar snap-x snap-mandatory px-2"
+    }>
       {buttons.map((btn, idx) => (
         <a
           key={idx}
           href={btn.href}
           target={btn.label !== "Call" && btn.label !== "Save" ? "_blank" : undefined}
           rel="noreferrer"
-          className="flex-shrink-0 flex flex-col items-center justify-center w-[72px] snap-start"
+          className={theme.isTheme4
+            ? `flex flex-col items-center justify-center p-3 rounded-xl border transition-all active:scale-95 ${theme.cardBg} hover:bg-[#2a1e0e] hover:border-[var(--gold)]`
+            : "flex-shrink-0 flex flex-col items-center justify-center w-[72px] snap-start"
+          }
         >
-          <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-2 shadow-sm transition-transform active:scale-95 ${theme.accentBg}`}>
+          <div className={theme.isTheme4
+            ? "text-[var(--gold)] mb-2"
+            : `w-14 h-14 rounded-full flex items-center justify-center mb-2 shadow-sm transition-transform active:scale-95 ${theme.accentBg}`
+          }>
             {btn.icon}
           </div>
-          <span className={`text-xs font-semibold ${theme.typography.heading}`}>
+          <span className={theme.isTheme4
+            ? "text-[9px] font-bold tracking-[2px] uppercase text-[var(--gold)] text-center"
+            : `text-xs font-semibold ${theme.typography.heading}`
+          }>
             {btn.label}
           </span>
         </a>

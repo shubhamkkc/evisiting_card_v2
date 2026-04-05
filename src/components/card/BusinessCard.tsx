@@ -16,6 +16,8 @@ import BottomNavBar from "./BottomNavBar";
 import InstallPWA from "./InstallPWA";
 import Link from "next/link";
 
+import Theme4Card from "./Theme4Card";
+
 // Adjust according to the Prisma schema TS definitions
 interface Business {
   id: string;
@@ -55,59 +57,82 @@ export default function BusinessCard({ business }: { business: Business }) {
   const servicesData = business.services && typeof business.services === 'string' ? JSON.parse(business.services) : business.services || [];
   const galleryData = business.gallery && typeof business.gallery === 'string' ? JSON.parse(business.gallery) : business.gallery || [];
 
+  if (business.theme === 'theme4') {
+    return <Theme4Card business={business} />;
+  }
+
   return (
-    <div className={`w-full min-h-screen pb-20 overflow-y-auto ${theme.container}`}>
+    <div className={`w-full min-h-screen pb-20 overflow-y-auto relative ${theme.container}`}>
+      {business.theme === 'theme4' && <div className="fixed inset-0 pointer-events-none z-[0] bg-grain opacity-30" />}
+      
       {/* 1. Header with Cover, Logo, Name, Designation */}
       <CardHeader business={business} theme={theme} />
 
       <div className="px-4 py-6 space-y-8">
-        {/* 2. Contact Action Buttons */}
-        <ContactButtons business={business} theme={theme} />
+        <div className="animate-fadeInUp" style={{ animationDelay: '0.1s' }}>
+          <ContactButtons business={business} theme={theme} />
+        </div>
 
         {/* 3. Social Media Links */}
         {socialData && Object.keys(socialData).length > 0 && (
-          <SocialLinks socialLinks={socialData} theme={theme} />
+          <div className="animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
+            <SocialLinks socialLinks={socialData} theme={theme} />
+          </div>
         )}
 
         {/* 4. About Us Section */}
         {business.about && (
-          <AboutSection business={business} theme={theme} />
+          <div className="animate-fadeInUp" style={{ animationDelay: '0.3s' }}>
+            <AboutSection business={business} theme={theme} />
+          </div>
         )}
 
         {/* 5. Products/Services */}
         {servicesData.length > 0 && (
-          <ServicesSection 
-            services={servicesData} 
-            business={business} 
-            theme={theme} 
-            onImageClick={(url: string) => setSelectedImage(url)}
-          />
+          <div className="animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
+            <ServicesSection 
+              services={servicesData} 
+              business={business} 
+              theme={theme} 
+              onImageClick={(url: string) => setSelectedImage(url)}
+            />
+          </div>
         )}
 
         {/* 6. Gallery */}
         {galleryData.length > 0 && (
-          <GallerySection 
-            gallery={galleryData} 
-            theme={theme} 
-            onImageClick={(url: string) => setSelectedImage(url)}
-          />
+          <div className="animate-fadeInUp" style={{ animationDelay: '0.5s' }}>
+            <GallerySection 
+              gallery={galleryData} 
+              theme={theme} 
+              onImageClick={(url: string) => setSelectedImage(url)}
+            />
+          </div>
         )}
 
         {/* Google Reviews Widget */}
-        <ReviewsSection business={business} theme={theme} />
+        <div className="animate-fadeInUp" style={{ animationDelay: '0.6s' }}>
+          <ReviewsSection business={business} theme={theme} />
+        </div>
 
         {/* 7. Enquiry Form */}
-        <EnquiryForm business={business} theme={theme} />
+        <div className="animate-fadeInUp" style={{ animationDelay: '0.7s' }}>
+          <EnquiryForm business={business} theme={theme} />
+        </div>
 
         {/* 8. Share Section */}
-        <ShareSection business={business} theme={theme} />
+        <div className="animate-fadeInUp" style={{ animationDelay: '0.8s' }}>
+          <ShareSection business={business} theme={theme} />
+        </div>
 
         {/* 9. Install as App (PWA) */}
-        <InstallPWA theme={theme} />
+        <div className="animate-fadeInUp" style={{ animationDelay: '0.9s' }}>
+          <InstallPWA theme={theme} />
+        </div>
 
         {/* 10. Footer Branding (Homepage Link) */}
-        <div className="pt-12 pb-8 text-center border-t border-gray-100">
-          <p className="text-gray-400 text-[11px] mb-4 uppercase tracking-[0.2em] font-bold">
+        <div className={`pt-12 pb-8 text-center border-t ${business.theme === 'theme4' ? 'border-[var(--border-gold)]/20 bg-[#080808]' : 'border-gray-100'}`}>
+          <p className={`${business.theme === 'theme4' ? 'text-[var(--gold)]/60' : 'text-gray-400'} text-[11px] mb-4 uppercase tracking-[0.2em] font-bold`}>
             Create your own digital card
           </p>
           <Link 
@@ -116,9 +141,9 @@ export default function BusinessCard({ business }: { business: Business }) {
           >
             Get Started Now
           </Link>
-          <div className="mt-8 flex flex-col items-center gap-1 opacity-40">
-            <span className="text-[10px] uppercase font-medium tracking-widest">Powered by</span>
-            <span className="text-sm font-black tracking-tight">EVisitingCard</span>
+          <div className={`mt-8 flex flex-col items-center gap-1 ${business.theme === 'theme4' ? 'opacity-60' : 'opacity-40'}`}>
+            <span className={`text-[10px] uppercase font-medium tracking-widest ${business.theme === 'theme4' ? 'text-[var(--gold-light)]' : ''}`}>Powered by</span>
+            <span className={`text-sm font-black tracking-tight ${business.theme === 'theme4' ? 'text-[var(--gold)] text-lg' : ''}`}>EVisitingCard</span>
           </div>
         </div>
       </div>

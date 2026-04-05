@@ -342,6 +342,7 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
                <option value="theme1">Clean Light (Theme 1)</option>
                <option value="theme2">Dark Glass (Theme 2)</option>
                <option value="theme3">Gradient Modern (Theme 3)</option>
+               <option value="theme4">Cinematic Dark (Theme 4)</option>
              </select>
           </div>
           <div>
