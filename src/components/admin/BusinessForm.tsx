@@ -78,6 +78,15 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
       const data = await res.json();
       
       if (data.url) {
+        // If replacing logo or cover photo, delete the old one from Cloudinary to free storage
+        if (type !== 'gallery' && formData[type] && formData[type].includes("cloudinary.com")) {
+          fetch("/api/upload/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ imageUrl: formData[type] }),
+          });
+        }
+
         if (type === 'gallery') {
           setFormData((prev: any) => ({ ...prev, gallery: [...(prev.gallery || []), data.url] }));
         } else {
@@ -133,18 +142,52 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
     setUploading(null);
   };
 
-  const removeService = (index: number) => {
+  const removeService = async (index: number) => {
+    const service = formData.services[index];
+    const imageUrl = service?.image;
+
+    // Remove from state
     setFormData((prev: any) => ({
       ...prev,
       services: prev.services.filter((_: any, i: number) => i !== index)
     }));
+
+    // If there was an image, delete it from Cloudinary
+    if (imageUrl && imageUrl.includes("cloudinary.com")) {
+      try {
+        await fetch("/api/upload/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageUrl }),
+        });
+      } catch (error) {
+        console.error("Cloudinary delete error:", error);
+      }
+    }
   };
 
-  const removeGalleryImage = (index: number) => {
+  const removeGalleryImage = async (index: number) => {
+    const imageUrl = formData.gallery[index];
+    
+    // Optimistically update UI
     setFormData((prev: any) => ({
       ...prev,
       gallery: prev.gallery.filter((_: any, i: number) => i !== index)
     }));
+
+    // Delete from Cloudinary
+    if (imageUrl && imageUrl.includes("cloudinary.com")) {
+      try {
+        await fetch("/api/upload/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageUrl }),
+        });
+        toast.success("Image removed from gallery & storage");
+      } catch (error) {
+        console.error("Cloudinary delete error:", error);
+      }
+    }
   };
 
   const addSocialLink = () => {

@@ -52,6 +52,15 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
       const res = await fetch("/api/upload", { method: "POST", body });
       const data = await res.json();
       if (data.url) {
+        // If replacing logo or cover photo, delete the old one from Cloudinary to free storage
+        if (type !== 'gallery' && formData[type] && formData[type].includes("cloudinary.com")) {
+          fetch("/api/upload/delete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ imageUrl: formData[type] }),
+          });
+        }
+
         if (type === "gallery") {
           setFormData((prev: any) => ({ ...prev, gallery: [...(prev.gallery || []), data.url] }));
         } else {
@@ -63,6 +72,54 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
       toast.error("Upload failed");
     }
     setUploading(null);
+  };
+
+  const removeGalleryImage = async (index: number) => {
+    const imageUrl = formData.gallery[index];
+    
+    // Update UI first
+    setFormData((prev: any) => ({
+      ...prev,
+      gallery: prev.gallery.filter((_: any, idx: number) => idx !== index)
+    }));
+
+    // Delete from Cloudinary
+    if (imageUrl && imageUrl.includes("cloudinary.com")) {
+      try {
+        await fetch("/api/upload/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageUrl }),
+        });
+        toast.success("Image removed");
+      } catch (error) {
+        console.error("Cloudinary delete error:", error);
+      }
+    }
+  };
+
+  const removeService = async (index: number) => {
+    const service = formData.services[index];
+    const imageUrl = service?.image;
+
+    // Remove from state
+    setFormData((prev: any) => ({
+      ...prev,
+      services: prev.services.filter((_: any, idx: number) => idx !== index)
+    }));
+
+    // delete from Cloudinary
+    if (imageUrl && imageUrl.includes("cloudinary.com")) {
+      try {
+        await fetch("/api/upload/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageUrl }),
+        });
+      } catch (error) {
+        console.error("Cloudinary delete error:", error);
+      }
+    }
   };
 
   const handleServiceImageUpload = async (file: File, index: number) => {
@@ -293,7 +350,7 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
               {formData.gallery?.map((img: string, i: number) => (
                 <div key={i} style={{ position: "relative", aspectRatio: "1", borderRadius: "10px", overflow: "hidden", border: "1px solid #e2e8f0" }}>
                   <img src={img} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-                  <button type="button" onClick={() => setFormData((prev: any) => ({ ...prev, gallery: prev.gallery.filter((_: any, idx: number) => idx !== i) }))}
+                  <button type="button" onClick={() => removeGalleryImage(i)}
                     style={{ position: "absolute", top: "3px", right: "3px", background: "#ef4444", border: "none", borderRadius: "50%", width: "20px", height: "20px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <Trash2 style={{ color: "white", width: "10px", height: "10px" }} />
                   </button>
@@ -372,7 +429,7 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {formData.services?.map((service: any, i: number) => (
               <div key={i} style={{ background: "#f8fafc", borderRadius: "12px", padding: "16px", border: "1px solid #e2e8f0", position: "relative" }}>
-                <button type="button" onClick={() => setFormData((prev: any) => ({ ...prev, services: prev.services.filter((_: any, idx: number) => idx !== i) }))}
+                <button type="button" onClick={() => removeService(i)}
                   style={{ position: "absolute", top: "12px", right: "12px", background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}>
                   <Trash2 style={{ width: "16px", height: "16px" }} />
                 </button>
