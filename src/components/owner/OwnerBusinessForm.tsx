@@ -404,8 +404,8 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
                 </select>
                 <input type="url" placeholder="https://..." style={{ ...inputStyle, flex: 1 }} value={link.url} onChange={e => { const n = [...formData.socialLinks]; n[i] = { ...n[i], url: e.target.value }; setFormData({ ...formData, socialLinks: n }); }} />
                 <button type="button" onClick={() => setFormData((prev: any) => ({ ...prev, socialLinks: prev.socialLinks.filter((_: any, idx: number) => idx !== i) }))}
-                  style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: "4px", display: "flex" }}>
-                  <Trash2 style={{ width: "16px", height: "16px" }} />
+                  style={{ background: "#fee2e2", border: "none", cursor: "pointer", color: "#ef4444", padding: "8px", display: "flex", borderRadius: "8px", transition: "all 0.2s" }}>
+                  <Trash2 style={{ width: "18px", height: "18px" }} />
                 </button>
               </div>
             ))}
@@ -430,8 +430,8 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
             {formData.services?.map((service: any, i: number) => (
               <div key={i} style={{ background: "#f8fafc", borderRadius: "12px", padding: "16px", border: "1px solid #e2e8f0", position: "relative" }}>
                 <button type="button" onClick={() => removeService(i)}
-                  style={{ position: "absolute", top: "12px", right: "12px", background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}>
-                  <Trash2 style={{ width: "16px", height: "16px" }} />
+                  style={{ position: "absolute", top: "12px", right: "12px", background: "#fee2e2", border: "none", cursor: "pointer", color: "#ef4444", padding: "6px", borderRadius: "8px" }}>
+                  <Trash2 style={{ width: "18px", height: "18px" }} />
                 </button>
                 <div style={{ display: "grid", gridTemplateColumns: "100px 1fr", gap: "12px" }}>
                   <div>

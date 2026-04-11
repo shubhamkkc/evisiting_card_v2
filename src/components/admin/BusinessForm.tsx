@@ -107,7 +107,7 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
     }
     setFormData((prev: any) => ({
       ...prev,
-      services: [...(prev.services || []), { title: "", description: "", image: "" }]
+      services: [...(prev.services || []), { title: "", description: "", image: "", price: "" }]
     }));
   };
 
@@ -442,7 +442,7 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
               {formData.gallery?.map((img: string, i: number) => (
                 <div key={i} className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                   <img src={img} className="w-full h-full object-cover" />
-                  <button type="button" onClick={() => removeGalleryImage(i)} className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button type="button" onClick={() => removeGalleryImage(i)} className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full shadow-md z-10 transition-transform active:scale-95">
                     <Trash2 className="w-3 h-3" />
                   </button>
                 </div>
@@ -523,8 +523,8 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
           <div className="md:col-span-2 space-y-4">
             {formData.services?.map((service: any, i: number) => (
               <div key={i} className="p-4 bg-gray-50 rounded-xl border border-gray-200 relative">
-                <button type="button" onClick={() => removeService(i)} className="absolute top-4 right-4 text-gray-400 hover:text-red-500">
-                  <Trash2 className="w-4 h-4" />
+                <button type="button" onClick={() => removeService(i)} className="absolute top-4 right-4 text-red-400 hover:text-red-600 transition-colors">
+                  <Trash2 className="w-5 h-5" />
                 </button>
                 <div className="grid md:grid-cols-[120px_1fr] gap-4">
                   <div className="flex flex-col gap-2">
@@ -543,6 +543,7 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
                   </div>
                   <div className="grid gap-3">
                     <input type="text" placeholder="Service Title (e.g. Free Home Delivery)" className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" value={service.title} onChange={e => updateService(i, 'title', e.target.value)} />
+                    <input type="text" placeholder="Price (e.g. ₹20,000 Onwards)" className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" value={service.price || ""} onChange={e => updateService(i, 'price', e.target.value)} />
                     <textarea rows={2} placeholder="Description..." className="w-full px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" value={service.description} onChange={e => updateService(i, 'description', e.target.value)} />
                   </div>
                 </div>

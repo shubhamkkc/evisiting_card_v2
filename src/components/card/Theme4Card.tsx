@@ -62,6 +62,7 @@ interface Business {
   services?: any;
   gallery?: any;
   theme: string;
+  themeColor?: string | null;
   googleReviewWidget?: string | null;
 }
 
@@ -257,7 +258,12 @@ export default function Theme4Card({ business }: { business: Business }) {
           className="px-8 pb-8">
           <SectionTitle>Mastery of Service</SectionTitle>
           <div className="grid grid-cols-2 gap-4">
-            {servicesData.map((svc: any, i: number) => (
+            {servicesData.map((svc: any, i: number) => {
+              const rawP = (svc.price || '').trim();
+              const displayP = /^\d+$/.test(rawP) ? `₹${Number(rawP).toLocaleString('en-IN')}` : rawP;
+              const priceVal = displayP.replace(/onwards|from/gi, '').trim();
+
+              return (
               <motion.div key={i} whileHover={{ y: -5 }}>
                 <Card className="bg-[#18181b] border-[rgba(212,175,112,0.05)] rounded-[24px] p-0 h-full relative overflow-hidden cursor-pointer group hover:border-[rgba(212,175,112,0.3)] transition-all duration-500 shadow-xl flex flex-col">
                   {svc.image ? (
@@ -269,10 +275,41 @@ export default function Theme4Card({ business }: { business: Business }) {
                         className="object-cover transition-transform duration-700 group-hover:scale-110"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#18181b] to-transparent opacity-60" />
+                      
+                      {/* Top Right Circular Badge */}
+                      {svc.price && (
+                        <div 
+                          className="absolute top-2 right-2 w-[85px] h-[85px] rounded-full border-[1.5px] shadow-[0_4px_15px_rgba(0,0,0,0.6)] flex flex-col items-center justify-center z-10 text-center bg-transparent backdrop-blur-sm"
+                          style={{ borderColor: business.themeColor || '#d4af70' }}
+                        >
+                          <span className="text-[11px] italic leading-[1.2]" style={{ color: business.themeColor || '#d4af70' }}>From</span>
+                          <span className="text-[17px] font-black leading-[1.2] pb-0.5" style={{ color: business.themeColor || '#d4af70' }}>{priceVal}</span>
+                          <span className="text-[11px] leading-[1.2]" style={{ color: business.themeColor || '#d4af70' }}>Onwards</span>
+                        </div>
+                      )}
+                      
+                      {/* Bottom Center Rectangular Badge */}
+                      {svc.price && (
+                        <div 
+                          className="absolute bottom-3 left-[10%] right-[10%] border-[1.5px] bg-transparent backdrop-blur-sm py-1.5 flex items-center justify-center gap-1.5 shadow-lg z-10 rounded-sm"
+                          style={{ borderColor: business.themeColor || '#d4af70' }}
+                        >
+                          <span className="font-bold text-[18px]" style={{ color: business.themeColor || '#d4af70' }}>{priceVal}</span>
+                          <span className="text-[16px] font-medium" style={{ color: business.themeColor || '#d4af70' }}>Onwards</span>
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <div className="w-full aspect-video bg-gradient-to-br from-[#2a1a08] to-[#0f0a04] flex items-center justify-center">
+                    <div className="w-full aspect-video bg-gradient-to-br from-[#2a1a08] to-[#0f0a04] flex items-center justify-center relative">
                       <Star className="w-8 h-8 text-[#d4af70] opacity-20" />
+                      {svc.price && (
+                        <div 
+                          className="absolute bottom-2 left-2 border-[1.5px] bg-transparent backdrop-blur-sm px-2 py-1 text-[10px] font-bold rounded shadow-lg z-10"
+                          style={{ color: business.themeColor || '#d4af70', borderColor: business.themeColor || '#d4af70' }}
+                        >
+                          {priceVal} Onwards
+                        </div>
+                      )}
                     </div>
                   )}
                   
@@ -281,13 +318,13 @@ export default function Theme4Card({ business }: { business: Business }) {
                     <h3 className="text-[14px] font-serif tracking-wide text-[#fafaf9] mb-2">{svc.title || svc.name}</h3>
                     <p className="text-[11px] text-[#57534e] leading-relaxed line-clamp-3 font-light mb-4">{svc.description}</p>
                     <a href={`https://wa.me/${business.whatsapp?.replace(/\D/g, '')}?text=Hi, I'm interested in your service: ${svc.title || svc.name}`}
-                      className="inline-flex items-center gap-2 text-[9px] tracking-[2px] text-[#d4af70] uppercase font-bold no-underline group-hover:gap-3 transition-all mt-auto">
-                      Inquiry <span>→</span>
+                      className="inline-flex w-full items-center justify-center gap-2 py-2.5 rounded-xl font-bold tracking-wide text-white bg-gradient-to-r from-[#d4af70] to-[#b38d47] transition-all hover:opacity-90 shadow-md mt-auto">
+                      Enquiry
                     </a>
                   </div>
                 </Card>
               </motion.div>
-            ))}
+            )})}
           </div>
         </motion.section>
       )}
