@@ -34,6 +34,8 @@ model Business {
   isActive      Boolean  @default(true)
   ownerEmail    String?  @unique
   ownerPassword String?
+  showCardViews Boolean  @default(true)
+  cardViews     Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

@@ -33,6 +33,7 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
 
       return {
         ...initialData,
+        showCardViews: initialData.showCardViews ?? true,
         slug: initialData.slug || "",
         socialLinks: Array.isArray(socialLinks) 
           ? socialLinks 
@@ -53,6 +54,7 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
       phone: "", whatsapp: "", email: "", website: "", address: "",
       googleMapsUrl: "", logo: "", coverPhoto: "", about: "", category: "",
       yearEstd: "", theme: "theme1", themeColor: "#0ea5e9", isActive: true,
+      showCardViews: true,
       ownerEmail: "", ownerPassword: "",
       socialLinks: [
         { platform: "facebook", url: "" },
@@ -377,6 +379,21 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
           
           <div className="md:col-span-2 border-b border-gray-100 pb-4 mb-2 mt-4">
             <h2 className="text-lg font-bold text-gray-900">Theme Details</h2>
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="flex items-center gap-3 p-4 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
+              <input 
+                type="checkbox" 
+                className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                checked={formData.showCardViews !== false}
+                onChange={e => setFormData({...formData, showCardViews: e.target.checked})}
+              />
+              <div>
+                <p className="font-bold text-gray-900">Show Card Views</p>
+                <p className="text-xs text-gray-500">Display a view counter at the top of the card</p>
+              </div>
+            </label>
           </div>
 
           <div>

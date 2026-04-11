@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { X, Eye } from "lucide-react";
 import { getTheme } from "./themes";
 import CardHeader from "./CardHeader";
 import ContactButtons from "./ContactButtons";
@@ -41,16 +41,42 @@ interface Business {
   gallery?: NonNullable<any>;
   theme: string;
   themeColor: string;
+  showCardViews?: boolean;
+  cardViews?: number;
 }
 
 export default function BusinessCard({ business }: { business: Business }) {
   const theme = getTheme(business.theme);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [viewCount, setViewCount] = useState(business.cardViews ?? 0);
 
   useEffect(() => {
     // Set custom CSS variable for dynamic accent color based on user selection
     document.documentElement.style.setProperty('--theme-color', business.themeColor);
   }, [business.themeColor]);
+
+  useEffect(() => {
+    if (business.slug) {
+      const storageKey = `viewed_${business.slug}`;
+      const hasViewed = localStorage.getItem(storageKey);
+      
+      if (!hasViewed) {
+        fetch('/api/view', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug: business.slug })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            localStorage.setItem(storageKey, 'true');
+            if (data.views) setViewCount(data.views);
+          }
+        })
+        .catch(console.error);
+      }
+    }
+  }, [business.slug]);
 
   // Handle parsing JSON data gracefully
   const socialData = business.socialLinks && typeof business.socialLinks === 'string' ? JSON.parse(business.socialLinks) : business.socialLinks;
@@ -58,11 +84,27 @@ export default function BusinessCard({ business }: { business: Business }) {
   const galleryData = business.gallery && typeof business.gallery === 'string' ? JSON.parse(business.gallery) : business.gallery || [];
 
   if (business.theme === 'theme4') {
-    return <Theme4Card business={business} />;
+    return (
+      <div className="relative w-full max-w-lg mx-auto">
+         {business.showCardViews && (
+           <div className="absolute top-4 right-4 z-50 bg-[#18181b]/80 backdrop-blur-md text-[#d4af70] text-[10px] uppercase tracking-[2px] font-bold px-4 py-2 rounded-full flex items-center gap-2 shadow-2xl border border-[rgba(212,175,112,0.2)]">
+             <Eye className="w-3.5 h-3.5" />
+             {viewCount} Views
+           </div>
+         )}
+         <Theme4Card business={business} />
+      </div>
+    );
   }
 
   return (
     <div className={`w-full min-h-screen pb-20 overflow-y-auto relative ${theme.container}`}>
+      {business.showCardViews && (
+        <div className="absolute top-4 right-4 z-50 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg border border-white/20">
+          <Eye className="w-3.5 h-3.5" />
+          {viewCount} Views
+        </div>
+      )}
       {business.theme === 'theme4' && <div className="fixed inset-0 pointer-events-none z-[0] bg-grain opacity-30" />}
       
       {/* 1. Header with Cover, Logo, Name, Designation */}
