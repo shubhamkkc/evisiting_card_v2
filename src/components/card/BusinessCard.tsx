@@ -17,6 +17,7 @@ import InstallPWA from "./InstallPWA";
 import Link from "next/link";
 
 import Theme4Card from "./Theme4Card";
+import Theme5Card from "./Theme5Card";
 
 // Adjust according to the Prisma schema TS definitions
 interface Business {
@@ -93,6 +94,14 @@ export default function BusinessCard({ business }: { business: Business }) {
            </div>
          )}
          <Theme4Card business={business} />
+      </div>
+    );
+  }
+
+  if (business.theme === 'theme5') {
+    return (
+      <div className="w-full max-w-lg mx-auto">
+        <Theme5Card business={business} viewCount={viewCount} />
       </div>
     );
   }
