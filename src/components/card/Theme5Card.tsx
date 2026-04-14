@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import QRCode from "qrcode";
 import {
   Phone, MessageCircle, Mail, Globe, MapPin, Download,
   Home, Info, ShoppingBag, Image as ImageIcon, Send,
   Facebook, Instagram, Linkedin, Youtube, Twitter,
   Music, Ghost, Link as LinkIcon, Star,
-  X, Eye
+  X, Eye, Share2, Copy, Check,
 } from "lucide-react";
 
 // ─── Color Extraction from logo ────────────────────────────────────────────────
@@ -19,7 +19,7 @@ async function extractLogoColors(src: string): Promise<string[]> {
     img.onload = () => {
       try {
         const canvas = document.createElement("canvas");
-        const SIZE = 60;
+        const SIZE = 80;
         canvas.width = SIZE;
         canvas.height = SIZE;
         const ctx = canvas.getContext("2d");
@@ -27,21 +27,18 @@ async function extractLogoColors(src: string): Promise<string[]> {
         ctx.drawImage(img, 0, 0, SIZE, SIZE);
         const data = ctx.getImageData(0, 0, SIZE, SIZE).data;
 
-        // Sample pixels and bucket by hue
         const buckets: Record<number, { r: number; g: number; b: number; count: number }> = {};
         const BUCKET_SIZE = 30;
 
         for (let i = 0; i < data.length; i += 4) {
           const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
-          if (a < 128) continue; // skip transparent
-
-          // Skip near-white and near-black and near-grey
+          if (a < 128) continue;
           const max = Math.max(r, g, b);
           const min = Math.min(r, g, b);
           const saturation = max === 0 ? 0 : (max - min) / max;
-          if (saturation < 0.3) continue; // skip greyscale
-          if (max < 50) continue;         // too dark
-          if (min > 200) continue;        // too bright/white
+          if (saturation < 0.25) continue;
+          if (max < 60) continue;
+          if (min > 210) continue;
 
           const h = rgbToHue(r, g, b);
           const bucket = Math.floor(h / BUCKET_SIZE) * BUCKET_SIZE;
@@ -53,7 +50,7 @@ async function extractLogoColors(src: string): Promise<string[]> {
         }
 
         const sorted = Object.entries(buckets)
-          .filter(([_, v]) => v.count > 10)
+          .filter(([_, v]) => v.count > 5)
           .sort((a, b) => b[1].count - a[1].count)
           .slice(0, 6)
           .map(([_, v]) => {
@@ -62,7 +59,6 @@ async function extractLogoColors(src: string): Promise<string[]> {
           });
 
         if (sorted.length < 3) return resolve(getFallbackColors());
-        // Pad to 6
         while (sorted.length < 6) sorted.push(sorted[sorted.length % sorted.length]);
         resolve(sorted);
       } catch {
@@ -88,45 +84,81 @@ function rgbToHue(r: number, g: number, b: number): number {
 
 function getFallbackColors(): string[] {
   return [
-    "rgb(255,0,153)",
-    "rgb(0,179,65)",
-    "rgb(0,140,186)",
-    "rgb(21,101,192)",
-    "rgb(194,24,91)",
-    "rgb(106,27,154)",
+    "rgb(236,0,140)",   // magenta
+    "rgb(0,174,239)",   // cyan
+    "rgb(255,212,0)",   // yellow
+    "rgb(30,169,80)",   // green
+    "rgb(255,102,0)",   // orange
+    "rgb(106,27,154)",  // purple
   ];
 }
 
-// Make a CSS linear-gradient from the palette
+// Convert "rgb(r,g,b)" → "#rrggbb" for libraries that need hex
+function rgbStrToHex(rgb: string): string {
+  const m = rgb.match(/(\d+),\s*(\d+),\s*(\d+)/);
+  if (!m) return "#000000";
+  return "#" + [m[1], m[2], m[3]]
+    .map(n => parseInt(n).toString(16).padStart(2, "0"))
+    .join("");
+}
+
 function makeGrad(colors: string[], dir = "135deg") {
   return `linear-gradient(${dir}, ${colors.join(", ")})`;
 }
 
-// ─── Wave SVG ──────────────────────────────────────────────────────────────────
-function WaveSection({ colors, flip = false, height = 140 }: { colors: string[]; flip?: boolean; height?: number }) {
-  const grad = colors.length >= 2
-    ? colors.slice(0, Math.min(colors.length, 4)).join(", ")
-    : "#FF0099, #FF6600, #FFCC00, #0099FF";
+// ─── Wave SVG (uses palette colors) ───────────────────────────────────────────
+function WaveSection({ colors, flip = false, height = 120 }: { colors: string[]; flip?: boolean; height?: number }) {
+  const id1 = flip ? "wg1f" : "wg1";
+  const id2 = flip ? "wg2f" : "wg2";
   return (
-    <div style={{ height, overflow: "hidden", transform: flip ? "scaleY(-1)" : "none", width: "100%" }}>
-      <svg viewBox="0 0 1200 140" preserveAspectRatio="none" style={{ width: "100%", height: "100%" }}>
+    <div style={{ height, overflow: "hidden", transform: flip ? "scaleY(-1)" : "none", width: "100%", lineHeight: 0 }}>
+      <svg viewBox="0 0 1200 120" preserveAspectRatio="none" style={{ width: "100%", height: "100%", display: "block" }}>
         <defs>
-          <linearGradient id="wg1" x1="0%" y1="0%" x2="100%" y2="0%">
+          <linearGradient id={id1} x1="0%" y1="0%" x2="100%" y2="0%">
             {colors.map((c, i) => (
-              <stop key={i} offset={`${(i / (colors.length - 1)) * 100}%`} stopColor={c} />
+              <stop key={i} offset={`${(i / Math.max(colors.length - 1, 1)) * 100}%`} stopColor={c} />
             ))}
           </linearGradient>
-          <linearGradient id="wg2" x1="100%" y1="0%" x2="0%" y2="0%">
+          <linearGradient id={id2} x1="100%" y1="0%" x2="0%" y2="0%">
             {colors.map((c, i) => (
-              <stop key={i} offset={`${(i / (colors.length - 1)) * 100}%`} stopColor={c} />
+              <stop key={i} offset={`${(i / Math.max(colors.length - 1, 1)) * 100}%`} stopColor={c} />
             ))}
           </linearGradient>
         </defs>
-        <path d="M0,60 C200,10 400,120 600,60 C800,0 1000,100 1200,50 L1200,140 L0,140 Z" fill="url(#wg1)" opacity="0.95" />
-        <path d="M0,90 C150,40 350,130 550,80 C750,30 950,110 1200,70 L1200,140 L0,140 Z" fill="url(#wg2)" opacity="0.65" />
-        <path d="M0,110 C100,70 300,140 500,100 C700,60 900,130 1200,100 L1200,140 L0,140 Z" fill="url(#wg1)" opacity="0.45" />
+        <path d="M0,50 C200,5 400,110 600,50 C800,0 1000,90 1200,40 L1200,120 L0,120 Z" fill={`url(#${id1})`} opacity="0.95" />
+        <path d="M0,75 C150,30 350,115 550,65 C750,20 950,100 1200,60 L1200,120 L0,120 Z" fill={`url(#${id2})`} opacity="0.65" />
+        <path d="M0,95 C100,65 300,120 500,90 C700,58 900,115 1200,88 L1200,120 L0,120 Z" fill={`url(#${id1})`} opacity="0.4" />
       </svg>
     </div>
+  );
+}
+
+// ─── Section Card wrapper ──────────────────────────────────────────────────────
+function SectionCard({ gradient, children }: { gradient: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-3xl overflow-hidden shadow-md border border-gray-100">
+      <div className="h-1.5 w-full" style={{ background: gradient }} />
+      <div className="p-5 bg-white">{children}</div>
+    </div>
+  );
+}
+
+// ─── Section heading ───────────────────────────────────────────────────────────
+function SectionHeading({ gradient, children }: { gradient: string; children: React.ReactNode }) {
+  return (
+    <h2
+      className="t5-heading font-black text-xs uppercase tracking-widest mb-4"
+      style={{
+        backgroundImage: gradient,
+        backgroundSize: "300% 300%",
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+        backgroundClip: "text",
+        animation: "t5-palette-anim 4s ease infinite",
+      }}
+    >
+      {children}
+    </h2>
   );
 }
 
@@ -134,9 +166,12 @@ function WaveSection({ colors, flip = false, height = 140 }: { colors: string[];
 export default function Theme5Card({ business, viewCount }: { business: any; viewCount: number }) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [palette, setPalette] = useState<string[]>(getFallbackColors());
-  const [palLoaded, setPalLoaded] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [cardUrl, setCardUrl] = useState("");
+  const [copied, setCopied] = useState(false);
+  const reviewRef = useRef<HTMLDivElement>(null);
 
-  // Parse data
+  // Parse JSON fields
   const socialData = business.socialLinks && typeof business.socialLinks === "string"
     ? JSON.parse(business.socialLinks) : business.socialLinks;
   const servicesData = business.services && typeof business.services === "string"
@@ -144,24 +179,71 @@ export default function Theme5Card({ business, viewCount }: { business: any; vie
   const galleryData = business.gallery && typeof business.gallery === "string"
     ? JSON.parse(business.gallery) : business.gallery || [];
 
-  // Extract colors from logo on mount
+  // Extract palette from logo
   useEffect(() => {
     if (business.logo) {
-      extractLogoColors(business.logo).then((colors) => {
-        setPalette(colors);
-        setPalLoaded(true);
-      });
-    } else {
-      setPalLoaded(true);
+      extractLogoColors(business.logo).then(setPalette);
     }
   }, [business.logo]);
 
-  // Derived convenience values
-  const p = palette; // shorthand
-  const gradHoriz = makeGrad(p, "90deg");
-  const gradDiag = makeGrad(p, "135deg");
+  // Generate QR code — always use hex colors (qrcode lib requires hex, not rgb())
+  useEffect(() => {
+    const url = `${window.location.origin}/${business.slug}`;
+    setCardUrl(url);
+    // Use first palette color converted to hex, or fallback to black
+    const darkColor = palette[0].startsWith("rgb")
+      ? rgbStrToHex(palette[0])
+      : palette[0];
+    QRCode.toDataURL(url, {
+      width: 240,
+      margin: 2,
+      errorCorrectionLevel: "M",
+      color: { dark: darkColor, light: "#FFFFFF" },
+    })
+      .then(setQrCodeUrl)
+      .catch((err) => {
+        console.error("QR generation error:", err);
+        // Fallback: try with plain black
+        QRCode.toDataURL(url, { width: 240, margin: 2 }).then(setQrCodeUrl).catch(console.error);
+      });
+  }, [business.slug, palette]);
 
-  // Social icon helper
+  // Inject Google Review widget
+  useEffect(() => {
+    if (!business.googleReviewWidget || !reviewRef.current) return;
+    const fragment = document.createRange().createContextualFragment(business.googleReviewWidget);
+    reviewRef.current.innerHTML = "";
+    reviewRef.current.appendChild(fragment);
+    const interval = setInterval(() => {
+      reviewRef.current?.querySelectorAll("img").forEach((img) => {
+        if (img.naturalWidth === 0) {
+          img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(img.alt || "R")}&background=random&color=fff`;
+        }
+      });
+    }, 1000);
+    const timeout = setTimeout(() => clearInterval(interval), 10000);
+    return () => { clearInterval(interval); clearTimeout(timeout); };
+  }, [business.googleReviewWidget, palette]);
+
+  // PWA install
+  const [pwaPrompt, setPwaPrompt] = useState<any>(null);
+  useEffect(() => {
+    const handler = (e: any) => { e.preventDefault(); setPwaPrompt(e); };
+    window.addEventListener("beforeinstallprompt", handler);
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const p = palette;
+  const gradH = makeGrad(p, "90deg");
+  const gradD = makeGrad(p, "135deg");
+
+  const copyLink = async () => {
+    try { await navigator.clipboard.writeText(cardUrl); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
+  };
+
   const getSocialIcon = (key: string) => {
     switch (key.toLowerCase()) {
       case "facebook": return <Facebook className="w-5 h-5" />;
@@ -174,8 +256,7 @@ export default function Theme5Card({ business, viewCount }: { business: any; vie
       case "tiktok": return <Music className="w-5 h-5" />;
       case "snapchat": return <Ghost className="w-5 h-5" />;
       case "website": return <Globe className="w-5 h-5" />;
-      case "google": case "googlereview": case "review":
-        return <Star className="w-5 h-5" />;
+      case "google": case "googlereview": case "review": return <Star className="w-5 h-5" />;
       default: return <LinkIcon className="w-5 h-5" />;
     }
   };
@@ -193,7 +274,6 @@ export default function Theme5Card({ business, viewCount }: { business: any; vie
   if (business.googleMapsUrl) contactButtons.push({ icon: <MapPin className="w-6 h-6" />, label: "Map", href: business.googleMapsUrl });
   contactButtons.push({ icon: <Download className="w-6 h-6" />, label: "Save", href: `/api/vcard/${business.slug}` });
 
-  // Social links
   const socialLinks: { platform: string; url: string }[] = Array.isArray(socialData)
     ? socialData.filter((l: any) => l.url)
     : socialData && typeof socialData === "object"
@@ -220,26 +300,19 @@ export default function Theme5Card({ business, viewCount }: { business: any; vie
 
         @keyframes t5-palette-anim {
           0%,100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
+          50%      { background-position: 100% 50%; }
         }
         @keyframes t5-float {
           0%,100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
+          50%      { transform: translateY(-7px); }
         }
-        @keyframes t5-fadeUp {
-          from { opacity:0; transform:translateY(18px); }
-          to   { opacity:1; transform:translateY(0); }
-        }
-        @keyframes t5-ring-spin {
-          to { transform: rotate(360deg); }
-        }
+        @keyframes t5-ring-spin { to { transform: rotate(360deg); } }
 
-        .t5-font { font-family: 'Poppins', system-ui, sans-serif; }
-        .t5-heading { font-family: 'Montserrat', 'Poppins', system-ui, sans-serif; }
-        .t5-float  { animation: t5-float 3s ease-in-out infinite; }
-        .t5-fadeUp { animation: t5-fadeUp 0.55s ease both; }
-        .t5-lift:hover { transform: translateY(-4px) scale(1.06); transition: transform .2s ease; }
-        .t5-lift { transition: transform .2s ease; }
+        .t5-font    { font-family: 'Poppins', system-ui, sans-serif; }
+        .t5-heading { font-family: 'Montserrat','Poppins', system-ui, sans-serif; }
+        .t5-float   { animation: t5-float 3.2s ease-in-out infinite; }
+        .t5-lift    { transition: transform .2s ease; }
+        .t5-lift:hover { transform: translateY(-4px) scale(1.06); }
 
         /* Animated gradient text */
         .t5-gtext {
@@ -257,30 +330,19 @@ export default function Theme5Card({ business, viewCount }: { business: any; vie
           position:absolute;
           inset:-5px;
           border-radius:50%;
-          background: conic-gradient(from 0deg, var(--t5-c0), var(--t5-c1), var(--t5-c2), var(--t5-c3), var(--t5-c4), var(--t5-c5), var(--t5-c0));
+          background: conic-gradient(from 0deg, var(--t5c0),var(--t5c1),var(--t5c2),var(--t5c3),var(--t5c4),var(--t5c5),var(--t5c0));
           animation: t5-ring-spin 4s linear infinite;
           z-index:0;
         }
         .t5-ring-inner {
-          position:relative; z-index:1;
-          border-radius:50%;
-          overflow:hidden;
-          background:#fff;
+          position:relative; z-index:1; border-radius:50%; overflow:hidden; background:#fff;
           width:152px; height:152px;
         }
+        .review-widget-container img { object-fit: cover !important; }
       `}</style>
 
-      {/* Inject CSS variables for conic ring */}
-      <style>{`
-        :root {
-          --t5-c0: ${p[0]};
-          --t5-c1: ${p[1]};
-          --t5-c2: ${p[2]};
-          --t5-c3: ${p[3]};
-          --t5-c4: ${p[4]};
-          --t5-c5: ${p[5]};
-        }
-      `}</style>
+      {/* Palette CSS vars */}
+      <style>{`:root{--t5c0:${p[0]};--t5c1:${p[1]};--t5c2:${p[2]};--t5c3:${p[3]};--t5c4:${p[4]};--t5c5:${p[5]};}`}</style>
 
       <div id="t5-top" className="t5-font w-full min-h-screen bg-white pb-24 overflow-x-hidden relative">
 
@@ -292,51 +354,42 @@ export default function Theme5Card({ business, viewCount }: { business: any; vie
           </div>
         )}
 
-        {/* ══════════════════════════════════════════
-            HEADER — Cover photo + wave overlay
-        ══════════════════════════════════════════ */}
+        {/* ══ HEADER: Cover Photo + Wave ══════════════════════════════════════ */}
         <div className="relative w-full" style={{ height: 220 }}>
-          {/* Cover photo / fallback */}
+          {/* Cover photo */}
           <div className="absolute inset-0 overflow-hidden">
             {business.coverPhoto ? (
-              <img
-                src={business.coverPhoto}
-                alt="Cover"
-                className="w-full h-full object-cover"
-              />
+              <img src={business.coverPhoto} alt="Cover" className="w-full h-full object-cover" />
             ) : (
-              <div style={{ background: gradDiag, width: "100%", height: "100%" }} />
+              <div className="w-full h-full" style={{ background: gradD }} />
             )}
           </div>
+          {/* subtle dark veil so wave reads clearly */}
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.55) 100%)" }} />
 
-          {/* Dark overlay so wave sits nicely */}
-          <div className="absolute inset-0 bg-black/30" />
-
-          {/* Palette-colored wave at the bottom of header */}
-          <div className="absolute bottom-0 left-0 right-0" style={{ height: 90, zIndex: 10 }}>
+          {/* Palette wave at bottom of header */}
+          <div className="absolute bottom-0 left-0 right-0" style={{ zIndex: 10 }}>
             <WaveSection colors={p} height={90} />
           </div>
 
-          {/* Small floating logo (top-right corner) */}
+          {/* Small floating logo (corner) */}
           {business.logo && (
             <div className="absolute top-5 right-16 z-20 t5-float">
-              <div className="w-14 h-14 rounded-full overflow-hidden bg-white shadow-2xl border-2 border-white/90">
+              <div className="w-14 h-14 rounded-full overflow-hidden bg-white shadow-2xl border-2 border-white">
                 <img src={business.logo} alt="" className="w-full h-full object-cover" />
               </div>
             </div>
           )}
         </div>
 
-        {/* ══════════════════════════════════════════
-            LOGO CIRCLE — overlapping the wave
-        ══════════════════════════════════════════ */}
-        <div className="flex justify-center" style={{ marginTop: -80, position: "relative", zIndex: 20 }}>
+        {/* ══ LOGO CIRCLE (spinning ring, overlapping wave) ════════════════════ */}
+        <div className="flex justify-center" style={{ marginTop: -80, position: "relative", zIndex: 30 }}>
           <div className="t5-ring-wrap" style={{ width: 162, height: 162 }}>
             <div className="t5-ring-inner">
               {business.logo ? (
                 <img src={business.logo} alt={business.businessName} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center" style={{ background: gradDiag }}>
+                <div className="w-full h-full flex items-center justify-center" style={{ background: gradD }}>
                   <span className="t5-heading font-black text-5xl text-white">{business.businessName.charAt(0)}</span>
                 </div>
               )}
@@ -344,41 +397,28 @@ export default function Theme5Card({ business, viewCount }: { business: any; vie
           </div>
         </div>
 
-        {/* ══════════════════════════════════════════
-            BUSINESS NAME + TAGS
-        ══════════════════════════════════════════ */}
-        <div className="text-center px-4 mt-4 t5-fadeUp">
-          <h1
-            className="t5-heading font-black text-4xl leading-tight t5-gtext"
-            style={{ backgroundImage: makeGrad(p, "90deg") }}
-          >
+        {/* ══ NAME + DESIGNATION + CATEGORY ════════════════════════════════════ */}
+        <div className="text-center px-4 mt-4">
+          <h1 className="t5-heading font-black text-4xl leading-tight t5-gtext" style={{ backgroundImage: gradH }}>
             {business.businessName}
           </h1>
-
           {(business.ownerName || business.designation) && (
             <p className="text-gray-500 text-sm mt-1.5 font-medium">
               {[business.ownerName, business.designation].filter(Boolean).join(" · ")}
             </p>
           )}
-
           {business.category && (
             <span
               className="inline-block mt-3 px-5 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-full"
-              style={{
-                background: `${p[0]}18`,
-                color: p[0],
-                border: `1px solid ${p[0]}44`,
-              }}
+              style={{ background: `${p[0]}18`, color: p[0], border: `1px solid ${p[0]}55` }}
             >
               {business.category}
             </span>
           )}
         </div>
 
-        {/* ══════════════════════════════════════════
-            CONTACT BUTTONS — each gets a unique extracted color
-        ══════════════════════════════════════════ */}
-        <div className="px-4 mt-8 t5-fadeUp" style={{ animationDelay: "0.1s" }} id="t5-contact">
+        {/* ══ CONTACT BUTTONS ═══════════════════════════════════════════════════ */}
+        <div className="px-4 mt-8" id="t5-contact">
           <div className="flex flex-wrap justify-center gap-4">
             {contactButtons.map((btn, idx) => (
               <a
@@ -394,10 +434,7 @@ export default function Theme5Card({ business, viewCount }: { business: any; vie
                 >
                   {btn.icon}
                 </div>
-                <span
-                  className="text-xs font-bold"
-                  style={{ color: p[idx % p.length] }}
-                >
+                <span className="text-xs font-bold" style={{ color: p[idx % p.length] }}>
                   {btn.label}
                 </span>
               </a>
@@ -405,25 +442,17 @@ export default function Theme5Card({ business, viewCount }: { business: any; vie
           </div>
         </div>
 
-        {/* ══════════════════════════════════════════
-            SOCIAL LINKS — on a wave strip
-        ══════════════════════════════════════════ */}
+        {/* ══ SOCIAL LINKS on wave strip ════════════════════════════════════════ */}
         {socialLinks.length > 0 && (
-          <div className="mt-8 relative" style={{ minHeight: 130 }}>
-            {/* Wave background */}
-            <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.88)" }} />
-            <div className="absolute top-0 left-0 right-0" style={{ height: 70, zIndex: 1 }}>
-              <WaveSection colors={[...p].reverse()} flip height={70} />
+          <div className="mt-8 relative" style={{ minHeight: 120 }}>
+            <div className="absolute inset-0" style={{ background: "rgba(8,8,20,0.92)" }} />
+            <div className="absolute top-0 left-0 right-0" style={{ zIndex: 1 }}>
+              <WaveSection colors={[...p].reverse()} flip height={60} />
             </div>
-            <div className="absolute bottom-0 left-0 right-0" style={{ height: 70, zIndex: 1 }}>
-              <WaveSection colors={p} height={70} />
+            <div className="absolute bottom-0 left-0 right-0" style={{ zIndex: 1 }}>
+              <WaveSection colors={p} height={60} />
             </div>
-
-            {/* Icons */}
-            <div
-              className="relative flex items-center justify-center gap-5"
-              style={{ zIndex: 10, paddingTop: 32, paddingBottom: 32 }}
-            >
+            <div className="relative flex items-center justify-center gap-5 flex-wrap px-4" style={{ zIndex: 10, paddingTop: 28, paddingBottom: 28 }}>
               {socialLinks.map((link, idx) => (
                 <a
                   key={idx}
@@ -440,91 +469,101 @@ export default function Theme5Card({ business, viewCount }: { business: any; vie
           </div>
         )}
 
-        {/* ══════════════════════════════════════════
-            ABOUT
-        ══════════════════════════════════════════ */}
+        {/* ══ ABOUT ═════════════════════════════════════════════════════════════ */}
         {business.about && (
-          <div id="t5-about" className="px-4 mt-8 t5-fadeUp" style={{ animationDelay: "0.2s" }}>
-            <div className="rounded-3xl overflow-hidden shadow-md border border-gray-100">
-              <div className="h-1.5 w-full" style={{ background: gradHoriz }} />
-              <div className="p-5 bg-white">
-                <h2
-                  className="t5-heading font-black text-xs uppercase tracking-widest mb-3 t5-gtext"
-                  style={{ backgroundImage: gradHoriz }}
-                >
-                  About Us
-                </h2>
-                <p className="text-gray-600 text-sm leading-relaxed">{business.about}</p>
-                {business.yearEstd && (
-                  <p className="text-xs text-gray-400 mt-3 font-semibold">Est. {business.yearEstd}</p>
-                )}
-              </div>
-            </div>
+          <div id="t5-about" className="px-4 mt-8">
+            <SectionCard gradient={gradH}>
+              <SectionHeading gradient={gradH}>About Us</SectionHeading>
+              <p className="text-gray-600 text-sm leading-relaxed">{business.about}</p>
+              {business.yearEstd && <p className="text-xs text-gray-400 mt-3 font-semibold">Est. {business.yearEstd}</p>}
+              {business.address && (
+                <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                  <MapPin className="w-3 h-3 shrink-0" style={{ color: p[0] }} />
+                  {business.address}
+                </p>
+              )}
+            </SectionCard>
           </div>
         )}
 
-        {/* ══════════════════════════════════════════
-            SERVICES
-        ══════════════════════════════════════════ */}
+        {/* ══ SERVICES & PRODUCTS ═══════════════════════════════════════════════ */}
         {servicesData.length > 0 && (
-          <div id="t5-services" className="px-4 mt-8 t5-fadeUp" style={{ animationDelay: "0.25s" }}>
-            <h2
-              className="t5-heading font-black text-xs uppercase tracking-widest mb-4 t5-gtext"
-              style={{ backgroundImage: gradHoriz }}
-            >
-              Services & Products
-            </h2>
+          <div id="t5-services" className="px-4 mt-8">
+            <SectionHeading gradient={gradH}>Services &amp; Products</SectionHeading>
             <div className="grid grid-cols-2 gap-3">
-              {servicesData.map((svc: any, idx: number) => (
-                <div
-                  key={idx}
-                  className="t5-lift rounded-2xl overflow-hidden shadow-md bg-white border border-gray-100 cursor-pointer"
-                  onClick={() => svc.image && setSelectedImage(svc.image)}
-                >
-                  {svc.image && (
-                    <div className="w-full aspect-square relative overflow-hidden">
-                      <img src={svc.image} alt={svc.title} className="w-full h-full object-cover" />
-                      <div className="absolute top-0 left-0 right-0 h-1" style={{ background: makeGrad([p[idx % p.length], p[(idx + 1) % p.length]]) }} />
-                      {svc.price && (
-                        <div
-                          className="absolute bottom-2 left-2 bg-white/95 backdrop-blur-sm rounded-full px-2.5 py-0.5 text-[10px] font-black shadow"
-                          style={{ color: p[idx % p.length] }}
-                        >
-                          {svc.price}
-                        </div>
+              {servicesData.map((svc: any, idx: number) => {
+                const rawP = (svc.price || "").trim();
+                const displayP = /^\d+$/.test(rawP) ? `₹${Number(rawP).toLocaleString("en-IN")}` : rawP;
+                const priceVal = displayP.replace(/onwards|from/gi, "").trim();
+                const color = p[idx % p.length];
+
+                return (
+                  <div
+                    key={idx}
+                    className="t5-lift rounded-2xl overflow-hidden shadow-md bg-white border border-gray-100 flex flex-col"
+                  >
+                    {svc.image ? (
+                      <div
+                        className="w-full aspect-square relative overflow-hidden cursor-pointer"
+                        onClick={() => setSelectedImage(svc.image)}
+                      >
+                        <img src={svc.image} alt={svc.title} className="w-full h-full object-cover" />
+                        {/* Palette top accent bar */}
+                        <div className="absolute top-0 left-0 right-0 h-1" style={{ background: makeGrad([color, p[(idx + 2) % p.length]]) }} />
+                        {/* Price badge */}
+                        {svc.price && (
+                          <div
+                            className="absolute top-2 right-2 w-[78px] h-[78px] rounded-full flex flex-col items-center justify-center z-10 bg-white/20 backdrop-blur-sm shadow-lg"
+                            style={{ border: `2px solid ${color}` }}
+                          >
+                            <span className="text-[10px] italic leading-tight" style={{ color }}>From</span>
+                            <span className="text-[15px] font-black leading-tight" style={{ color }}>{priceVal}</span>
+                            <span className="text-[10px] leading-tight" style={{ color }}>Onwards</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="w-full aspect-square flex items-center justify-center" style={{ background: `${color}12` }}>
+                        <ShoppingBag className="w-10 h-10" style={{ color: `${color}55` }} />
+                        {svc.price && !svc.image && (
+                          <span className="absolute text-xs font-bold" style={{ color }}>{priceVal} Onwards</span>
+                        )}
+                      </div>
+                    )}
+                    <div className="p-3 flex flex-col flex-1">
+                      <p className="font-bold text-gray-900 text-sm leading-tight">{svc.title}</p>
+                      {svc.description && (
+                        <p className="text-gray-500 text-xs mt-1 leading-relaxed line-clamp-2 flex-1">{svc.description}</p>
                       )}
+                      <a
+                        href={`https://wa.me/${business.whatsapp?.replace(/\D/g, "")}?text=Hi, I would like to enquire about: *${encodeURIComponent(svc.title)}*`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-3 w-full flex items-center justify-center py-2 rounded-xl font-bold text-white text-xs shadow-sm t5-lift"
+                        style={{ background: makeGrad([color, p[(idx + 1) % p.length]]) }}
+                      >
+                        Enquiry
+                      </a>
                     </div>
-                  )}
-                  <div className="p-3">
-                    <p className="font-bold text-gray-900 text-sm leading-tight">{svc.title}</p>
-                    {svc.description && <p className="text-gray-500 text-xs mt-1 leading-relaxed line-clamp-2">{svc.description}</p>}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* ══════════════════════════════════════════
-            GALLERY
-        ══════════════════════════════════════════ */}
+        {/* ══ GALLERY ═══════════════════════════════════════════════════════════ */}
         {galleryData.length > 0 && (
-          <div id="t5-gallery" className="px-4 mt-8 t5-fadeUp" style={{ animationDelay: "0.3s" }}>
-            <h2
-              className="t5-heading font-black text-xs uppercase tracking-widest mb-4 t5-gtext"
-              style={{ backgroundImage: gradHoriz }}
-            >
-              Gallery
-            </h2>
+          <div id="t5-gallery" className="px-4 mt-8">
+            <SectionHeading gradient={gradH}>Gallery</SectionHeading>
             <div className="grid grid-cols-3 gap-2">
               {galleryData.map((img: string, idx: number) => (
                 <div
                   key={idx}
-                  className="t5-lift aspect-square rounded-xl overflow-hidden shadow-sm cursor-pointer relative"
+                  className="t5-lift aspect-square rounded-xl overflow-hidden shadow-sm cursor-pointer relative group"
                   onClick={() => setSelectedImage(img)}
                 >
-                  <img src={img} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
-                  {/* colored corner accent */}
+                  <img src={img} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
                   <div className="absolute top-0 left-0 right-0 h-1" style={{ background: p[idx % p.length] }} />
                 </div>
               ))}
@@ -532,100 +571,156 @@ export default function Theme5Card({ business, viewCount }: { business: any; vie
           </div>
         )}
 
-        {/* ══════════════════════════════════════════
-            ENQUIRY
-        ══════════════════════════════════════════ */}
-        <div id="t5-enquiry" className="px-4 mt-8 t5-fadeUp" style={{ animationDelay: "0.35s" }}>
-          <div className="rounded-3xl overflow-hidden shadow-md border border-gray-100">
-            <div className="h-1.5 w-full" style={{ background: gradHoriz }} />
-            <div className="p-5 bg-white">
-              <h2
-                className="t5-heading font-black text-xs uppercase tracking-widest mb-4 t5-gtext"
-                style={{ backgroundImage: gradHoriz }}
-              >
-                Send an Enquiry
-              </h2>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const form = e.target as HTMLFormElement;
-                  const name = (form.elements.namedItem("t5name") as HTMLInputElement)?.value;
-                  const msg = (form.elements.namedItem("t5msg") as HTMLTextAreaElement)?.value;
-                  const wa = business.whatsapp || business.phone;
-                  if (wa) {
-                    window.open(`https://wa.me/${wa.replace(/\D/g, "")}?text=${encodeURIComponent(`Hello! I'm ${name}. ${msg}`)}`, "_blank");
-                  }
-                }}
-                className="space-y-3"
-              >
-                <input
-                  name="t5name"
-                  type="text"
-                  placeholder="Your Name"
-                  required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none transition-colors"
-                  style={{ "--focus-color": p[0] } as any}
-                  onFocus={e => (e.target.style.borderColor = p[0])}
-                  onBlur={e => (e.target.style.borderColor = "")}
-                />
-                <textarea
-                  name="t5msg"
-                  rows={3}
-                  placeholder="Your message..."
-                  required
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none transition-colors resize-none"
-                  onFocus={e => (e.target.style.borderColor = p[0])}
-                  onBlur={e => (e.target.style.borderColor = "")}
-                />
-                <button
-                  type="submit"
-                  className="w-full py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 active:scale-95 shadow-lg"
-                  style={{ background: gradHoriz }}
-                >
-                  Send via WhatsApp
-                </button>
-              </form>
-            </div>
+        {/* ══ GOOGLE REVIEWS WIDGET ═════════════════════════════════════════════ */}
+        {business.googleReviewWidget && (
+          <div className="mt-8 px-4">
+            <SectionCard gradient={gradH}>
+              <SectionHeading gradient={gradH}>Customer Reviews</SectionHeading>
+              <div ref={reviewRef} className="review-widget-container w-full" style={{ minHeight: 100 }} />
+            </SectionCard>
           </div>
+        )}
+
+        {/* ══ ENQUIRY FORM ══════════════════════════════════════════════════════ */}
+        <div id="t5-enquiry" className="px-4 mt-8">
+          <SectionCard gradient={gradH}>
+            <SectionHeading gradient={gradH}>Send an Enquiry</SectionHeading>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.target as HTMLFormElement;
+                const name = (form.elements.namedItem("t5name") as HTMLInputElement)?.value;
+                const phone = (form.elements.namedItem("t5phone") as HTMLInputElement)?.value;
+                const msg = (form.elements.namedItem("t5msg") as HTMLTextAreaElement)?.value;
+                const wa = business.whatsapp || business.phone;
+                if (wa) {
+                  window.open(
+                    `https://wa.me/${wa.replace(/\D/g, "")}?text=${encodeURIComponent(`Hello! I'm ${name} (${phone}). ${msg}`)}`,
+                    "_blank"
+                  );
+                }
+              }}
+              className="space-y-3"
+            >
+              <input
+                name="t5name"
+                type="text"
+                placeholder="Your Name"
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none transition-colors"
+                onFocus={e => (e.target.style.borderColor = p[0])}
+                onBlur={e => (e.target.style.borderColor = "")}
+              />
+              <input
+                name="t5phone"
+                type="tel"
+                placeholder="Your Phone Number"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none transition-colors"
+                onFocus={e => (e.target.style.borderColor = p[1])}
+                onBlur={e => (e.target.style.borderColor = "")}
+              />
+              <textarea
+                name="t5msg"
+                rows={3}
+                placeholder="Your message..."
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm outline-none transition-colors resize-none"
+                onFocus={e => (e.target.style.borderColor = p[2])}
+                onBlur={e => (e.target.style.borderColor = "")}
+              />
+              <button
+                type="submit"
+                className="w-full py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 active:scale-95 shadow-lg t5-lift"
+                style={{ background: gradH }}
+              >
+                Send via WhatsApp
+              </button>
+            </form>
+          </SectionCard>
         </div>
 
-        {/* ══════════════════════════════════════════
-            BOTTOM PALETTE WAVE + FOOTER
-        ══════════════════════════════════════════ */}
-        <div className="mt-10 relative" style={{ minHeight: 130 }}>
-          <div className="absolute inset-0" style={{ background: "rgba(6,6,20,0.95)" }} />
-          <div className="absolute top-0 left-0 right-0" style={{ height: 80, zIndex: 1 }}>
+        {/* ══ SHARE CARD (QR Code) ══════════════════════════════════════════════ */}
+        <div id="t5-share" className="px-4 mt-8">
+          <SectionCard gradient={gradH}>
+            <SectionHeading gradient={gradH}>Share Card</SectionHeading>
+            <div className="flex flex-col items-center gap-5">
+              {qrCodeUrl ? (
+                <div className="bg-white p-3 rounded-2xl shadow-md border border-gray-100">
+                  <img src={qrCodeUrl} alt="QR Code" width={180} height={180} className="rounded-lg" />
+                </div>
+              ) : (
+                <div className="w-[180px] h-[180px] bg-gray-100 animate-pulse rounded-2xl" />
+              )}
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={copyLink}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all border-2"
+                  style={{ borderColor: p[0], color: p[0], background: copied ? `${p[0]}15` : "white" }}
+                >
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  {copied ? "Copied!" : "Copy Link"}
+                </button>
+                <button
+                  onClick={() => window.open(`https://wa.me/?text=Check out my Digital Business Card: ${cardUrl}`, "_blank")}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm text-white shadow t5-lift"
+                  style={{ background: gradH }}
+                >
+                  <Share2 className="w-4 h-4" />
+                  Share
+                </button>
+              </div>
+            </div>
+          </SectionCard>
+        </div>
+
+        {/* ══ INSTALL PWA ═══════════════════════════════════════════════════════ */}
+        {pwaPrompt && (
+          <div className="px-4 mt-6">
+            <button
+              onClick={async () => {
+                pwaPrompt.prompt();
+                await pwaPrompt.userChoice;
+                setPwaPrompt(null);
+              }}
+              className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-bold text-white shadow-lg transition-all active:scale-95 t5-lift"
+              style={{ background: gradH }}
+            >
+              <Download className="w-5 h-5" />
+              Save as App (Install)
+            </button>
+            <p className="text-center text-xs text-gray-400 mt-2">Install this card as an app for easy access anytime.</p>
+          </div>
+        )}
+
+        {/* ══ BOTTOM WAVE + FOOTER ══════════════════════════════════════════════ */}
+        <div className="mt-10 relative" style={{ minHeight: 200 }}>
+          <div className="absolute inset-0" style={{ background: "rgba(6,6,22,0.96)" }} />
+          <div className="absolute top-0 left-0 right-0" style={{ zIndex: 1 }}>
             <WaveSection colors={p} flip height={80} />
           </div>
-          {/* Footer text */}
-          <div className="relative z-10 px-4 py-6 pt-20 text-center">
+          <div className="relative z-10 px-4 text-center" style={{ paddingTop: 90 }}>
             <p className="text-gray-500 text-[11px] mb-4 uppercase tracking-[0.2em] font-bold">
               Create your own digital card
             </p>
             <Link
               href="/"
               className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm font-extrabold text-white shadow-lg t5-lift"
-              style={{ background: gradHoriz }}
+              style={{ background: gradH }}
             >
               Get Started Now
             </Link>
-            <div className="mt-6 flex flex-col items-center gap-1 opacity-50">
+            <div className="mt-8 pb-8 flex flex-col items-center gap-1 opacity-40">
               <span className="text-[10px] uppercase font-medium tracking-widest text-gray-400">Powered by</span>
-              <span
-                className="text-sm font-black t5-gtext"
-                style={{ backgroundImage: gradHoriz }}
-              >
+              <span className="text-sm font-black t5-gtext" style={{ backgroundImage: gradH }}>
                 EVisitingCard
               </span>
             </div>
           </div>
         </div>
 
-        {/* ══════════════════════════════════════════
-            BOTTOM NAV — uses palette colors
-        ══════════════════════════════════════════ */}
+        {/* ══ BOTTOM NAVIGATION BAR ════════════════════════════════════════════ */}
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] z-50 bg-white border-t border-gray-100 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.15)]">
-          <div className="h-0.5 w-full" style={{ background: gradHoriz }} />
+          <div className="h-0.5 w-full" style={{ background: gradH }} />
           <div className="flex items-center justify-around h-[60px]">
             {navItems.map((item, idx) => (
               <button
@@ -641,9 +736,7 @@ export default function Theme5Card({ business, viewCount }: { business: any; vie
           </div>
         </div>
 
-        {/* ══════════════════════════════════════════
-            LIGHTBOX
-        ══════════════════════════════════════════ */}
+        {/* ══ LIGHTBOX ══════════════════════════════════════════════════════════ */}
         {selectedImage && (
           <div
             className="fixed inset-0 z-[9999] bg-black/95 flex items-center justify-center p-4"
