@@ -15,20 +15,26 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "EVisitingCard — Digital Business Cards",
+    default: "Digital Business Card for Indian Businesses | EVisitingCard — ₹499/year",
     template: "%s | EVisitingCard",
   },
-  description: "Create and share your digital business card instantly. One link, infinite connections. Professional, modern, and mobile-friendly.",
+  description: "Get your digital visiting card made in 24 hours. Trusted by electricians, photographers, CA firms & shops across India. Starting ₹499/year.",
   applicationName: "EVisitingCard",
   authors: [{ name: "EVisitingCard Team" }],
-  keywords: ["digital business card", "vcard", "business card", "networking", "nfc card"],
+  keywords: [
+    "digital business card India",
+    "digital visiting card online",
+    "online visiting card maker India",
+    "digital card for small business",
+    "₹499 digital business card",
+  ],
   openGraph: {
     type: "website",
-    locale: "en_US",
-    url: "https://evisitingcard.com",
+    locale: "en_IN",
+    url: "https://evistingcard.shop",
     siteName: "EVisitingCard",
-    title: "EVisitingCard — Digital Business Cards",
-    description: "The modern way to share your professional identity.",
+    title: "Digital Business Card for Indian Businesses | EVisitingCard — ₹499/year",
+    description: "Get your digital visiting card made in 24 hours. Trusted by electricians, photographers, CA firms & shops across India. Starting ₹499/year.",
   },
   icons: {
     icon: [

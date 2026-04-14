@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 export const revalidate = 3600; // Cache for 1 hour
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const baseUrl = (process.env.NEXTAUTH_URL || 'https://evistingcard.shop').replace(/\/$/, '');
 
   // 1. Fetch all active businesses
   const businesses = await prisma.business.findMany({
@@ -17,9 +17,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // 2. Map businesses to sitemap entries
   const businessUrls = businesses.map((business) => ({
-    url: `${baseUrl}/${business.slug}`,
+    url: `${baseUrl}/${business.slug.startsWith('/') ? business.slug.substring(1) : business.slug}`,
     lastModified: business.updatedAt,
-    changeFrequency: 'weekly' as const,
+    changeFrequency: 'monthly' as const,
     priority: 0.8,
   }));
 
@@ -30,6 +30,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'monthly' as const,
       priority: 1,
+    },
+    {
+      url: `${baseUrl}/for-photographers`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.9,
     },
     ...businessUrls,
   ];

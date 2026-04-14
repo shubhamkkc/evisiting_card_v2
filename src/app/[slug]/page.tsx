@@ -21,15 +21,32 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "Not Found" };
   }
 
+  // Extract city from address if available
+  const cityHint = business.address
+    ? business.address.split(",").slice(-2, -1)[0]?.trim() || ""
+    : "";
+  const locationSuffix = cityHint ? ` ${cityHint}` : "";
+
+  const title = `${business.businessName}${locationSuffix} — Digital Business Card | EVisitingCard`;
+  const description = `View ${business.businessName}'s digital visiting card. Contact details, services, gallery and more. Powered by EVisitingCard.`;
+  const cardUrl = `https://evistingcard.shop/${slug}`;
+
   return {
-    title: `${business.businessName} | Digital Business Card`,
-    description: business.about?.substring(0, 160) || `Digital business card for ${business.businessName}`,
+    title,
+    description,
     manifest: `/api/${slug}/manifest`,
+    alternates: {
+      canonical: cardUrl,
+    },
     icons: {
       icon: business.logo || "/favicon.ico",
       apple: business.logo || "/favicon.ico",
     },
     openGraph: {
+      title,
+      description,
+      url: cardUrl,
+      type: "website",
       images: business.logo ? [business.logo] : [],
     },
   };

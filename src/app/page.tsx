@@ -2,6 +2,17 @@ import { ArrowRight, QrCode, Share2, Smartphone, CheckCircle2 } from "lucide-rea
 import Link from "next/link";
 import AutoScrollingIframe from "@/components/AutoScrollingIframe";
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "ProfessionalService",
+  "name": "EVisitingCard",
+  "url": "https://evistingcard.shop",
+  "description": "Digital business card service for businesses across India",
+  "priceRange": "₹499-₹999",
+  "areaServed": "India",
+  "serviceType": "Digital Business Card",
+};
+
 export default function Home() {
   const whatsappUrl =
     "https://wa.me/918252744799?text=Hi%2C%20I%20want%20to%20create%20a%20digital%20business%20card%20for%20my%20business.";
@@ -37,14 +48,17 @@ export default function Home() {
           <div className="max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-sm font-medium mb-8">
               <span className="flex h-2 w-2 rounded-full bg-blue-600"></span>
-              The future of networking is digital
+              Serving businesses across India — Patna, Lucknow, Delhi, Mumbai and beyond.
             </div>
             <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8">
               Create Your Digital <br className="hidden md:block"/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Business Card</span>
             </h1>
-            <p className="text-xl text-gray-500 mb-10 max-w-2xl mx-auto font-medium">
+            <p className="text-xl text-gray-500 mb-4 max-w-2xl mx-auto font-medium">
               Message us on WhatsApp and we will create your digital business card for you. No public self-signup, just direct support and fast setup.
+            </p>
+            <p className="text-base text-gray-400 mb-10 max-w-2xl mx-auto">
+              We create digital business cards for local businesses — electricians, photographers, CA firms, shops, and more across India.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Link
@@ -225,6 +239,11 @@ export default function Home() {
           <p className="text-gray-500 font-medium">© {new Date().getFullYear()} EVisitingCard. All rights reserved.</p>
         </div>
       </footer>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     </div>
   );
 }
