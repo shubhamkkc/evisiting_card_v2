@@ -1,0 +1,39 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Business {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  businessName  String
+  ownerName     String?
+  designation   String?
+  phone         String
+  whatsapp      String?
+  email         String?
+  website       String?
+  address       String?
+  googleMapsUrl String?
+  googlePlaceId      String?
+  googleReviewWidget String?
+  logo               String?
+  coverPhoto    String?
+  about         String?
+  category      String?
+  yearEstd      String?
+  socialLinks   String?
+  services      String?
+  gallery       String?
+  theme         String   @default("theme1")
+  themeColor    String   @default("#0ea5e9")
+  isActive      Boolean  @default(true)
+  ownerEmail    String?  @unique
+  ownerPassword String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
