@@ -48,6 +48,9 @@ export const metadata: Metadata = {
     ],
   },
   manifest: "/site.webmanifest",
+  verification: {
+    google: "jpCvBLJ_31NzcKm-poZ9P3a8Yz5_gpfZqxMLNKazqt0",
+  },
 };
 
 export default function RootLayout({
