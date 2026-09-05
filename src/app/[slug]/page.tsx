@@ -154,7 +154,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? `${business.businessName}, ${area} ${city} mein professional ${business.category} services.${mainService ? ` ${mainService} packages available.` : ""} Enquiry karein.`
       : `View ${business.businessName}'s digital visiting card. Contact details, services, gallery and more. Powered by EVisitingCard.`;
 
-  const cardUrl = `https://evistingcard.shop/${slug}`;
+  const baseUrl = (process.env.NEXTAUTH_URL || "https://evisitingcardv2.netlify.app").replace(/\/$/, "");
+  const cardUrl = `${baseUrl}/${slug}`;
   const ogImage = business.coverPhoto || business.logo || null;
 
   return {
@@ -217,7 +218,8 @@ export default async function CardPage({ params }: Props) {
   const isAdmin = (session?.user as any)?.role === "admin";
 
   // ── JSON-LD data ──────────────────────────────────────────────────────────
-  const cardUrl = `https://evistingcard.shop/${slug}`;
+  const baseUrl = (process.env.NEXTAUTH_URL || "https://evisitingcardv2.netlify.app").replace(/\/$/, "");
+  const cardUrl = `${baseUrl}/${slug}`;
   const schemaType = resolveSchemaType(business.category);
   const addr = parseAddress(business.address);
 

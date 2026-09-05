@@ -6,7 +6,7 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "ProfessionalService",
   "name": "EVisitingCard",
-  "url": "https://evistingcard.shop",
+  "url": "https://evisitingcardv2.netlify.app",
   "description": "Digital business card service for businesses across India",
   "priceRange": "₹499-₹999",
   "areaServed": "India",
@@ -78,9 +78,9 @@ export default function Home() {
           {/* Mock Graphic */}
           <div className="mt-20 relative max-w-5xl mx-auto">
             <div className="flex flex-col md:flex-row justify-center gap-12 md:gap-8 items-center md:items-end relative perspective-[1000px]">
-              <Link href="https://evistingcard.shop/first-beat-studio" className="block w-full max-w-[280px] h-[580px] md:w-[280px] bg-slate-100 rounded-[2.5rem] p-2 border-[6px] border-slate-800 shadow-2xl transform md:rotate-[5deg] md:translate-y-12 md:hover:rotate-1 md:hover:translate-y-6 md:hover:scale-105 transition-all duration-300 z-10 hover:z-30 cursor-pointer">
+              <Link href="/first-beat-studio" className="block w-full max-w-[280px] h-[580px] md:w-[280px] bg-slate-100 rounded-[2.5rem] p-2 border-[6px] border-slate-800 shadow-2xl transform md:rotate-[5deg] md:translate-y-12 md:hover:rotate-1 md:hover:translate-y-6 md:hover:scale-105 transition-all duration-300 z-10 hover:z-30 cursor-pointer">
                 <div className="w-full h-full bg-white rounded-[2rem] overflow-hidden relative shadow-inner">
-                  <AutoScrollingIframe src="https://evistingcard.shop/first-beat-studio" title="First Beat Studio Preview" />
+                  <AutoScrollingIframe src="/first-beat-studio" title="First Beat Studio Preview" />
                 </div>
               </Link>
               <Link href="/snehaa-mehndi-art" className="block w-full max-w-[280px] h-[580px] md:w-[280px] bg-slate-100 rounded-[2.5rem] p-2 border-[6px] border-slate-800 shadow-2xl transform md:rotate-[-5deg] md:translate-y-12 md:hover:-rotate-1 md:hover:translate-y-6 md:hover:scale-105 transition-all duration-300 z-10 hover:z-30 cursor-pointer">

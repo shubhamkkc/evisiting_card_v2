@@ -14,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXTAUTH_URL || "https://evisitingcardv2.netlify.app"),
   title: {
     default: "Digital Business Card for Indian Businesses | EVisitingCard — ₹499/year",
     template: "%s | EVisitingCard",
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://evistingcard.shop",
+    url: "https://evisitingcardv2.netlify.app",
     siteName: "EVisitingCard",
     title: "Digital Business Card for Indian Businesses | EVisitingCard — ₹499/year",
     description: "Get your digital visiting card made in 24 hours. Trusted by electricians, photographers, CA firms & shops across India. Starting ₹499/year.",

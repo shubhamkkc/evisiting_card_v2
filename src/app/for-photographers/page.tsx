@@ -15,13 +15,13 @@ export const metadata: Metadata = {
     "digital card photographer India",
   ],
   alternates: {
-    canonical: "https://evistingcard.shop/for-photographers",
+    canonical: "https://evisitingcardv2.netlify.app/for-photographers",
   },
   openGraph: {
     title: "Digital Business Card for Photographers India | EVisitingCard",
     description:
       "Digital visiting card for photographers and studios across India. Show your portfolio, gallery & contact in one link. Starting ₹499/year.",
-    url: "https://evistingcard.shop/for-photographers",
+    url: "https://evisitingcardv2.netlify.app/for-photographers",
     type: "website",
   },
 };
@@ -127,14 +127,12 @@ export default function ForPhotographersPage() {
 
             <div className="flex justify-center">
               <Link
-                href="https://evistingcard.shop/first-beat-studio"
-                target="_blank"
-                rel="noreferrer"
+                href="/first-beat-studio"
                 className="block w-full max-w-[300px] h-[600px] bg-slate-900 rounded-[2.5rem] p-2 border-[6px] border-slate-800 shadow-2xl hover:scale-105 hover:-translate-y-2 transition-all duration-300 cursor-pointer"
               >
                 <div className="w-full h-full bg-white rounded-[2rem] overflow-hidden shadow-inner">
                   <AutoScrollingIframe
-                    src="https://evistingcard.shop/first-beat-studio"
+                    src="/first-beat-studio"
                     title="First Beat Studio — Digital Business Card Preview"
                   />
                 </div>
@@ -143,9 +141,7 @@ export default function ForPhotographersPage() {
 
             <div className="text-center mt-8">
               <Link
-                href="https://evistingcard.shop/first-beat-studio"
-                target="_blank"
-                rel="noreferrer"
+                href="/first-beat-studio"
                 className="inline-flex items-center gap-2 text-purple-600 font-semibold hover:underline text-sm"
               >
                 View Full Card <ArrowRight className="w-4 h-4" />
