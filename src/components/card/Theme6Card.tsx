@@ -6,18 +6,20 @@
 // (Save Contact / Install App / Call / Email) → Website / Maps. Everything
 // below the fold is compact: small left-aligned headings, 12px gaps,
 // no duplicate description, no bottom nav, no decorative banner art.
-// Design tokens (DESIGN.md, OpenDesignMD): ink #000000 · canvas-warm
-// #F3F3F1 · surface-lime #D2E823 (primary CTA) · accent-purple #471E67
-// · surface-lavender #E9C0E9 · muted #676B5F. Pill buttons radius 9999px.
-// Social pills carry each platform's own brand colour on the icon chip
+// COLOURS ARE DYNAMIC: the layout language is Linktree (pill buttons,
+// radii, spacing), but every colour token comes from the business's own
+// logo via the Brand Identity Engine (src/lib/brand.ts). A business
+// without a stored palette renders the Linktree lime/purple fallback.
+// Social pills keep each platform's own brand colour on the icon chip
 // (YouTube red, Instagram gradient, Facebook blue, WhatsApp green) while
-// the pill itself stays Linktree-white.
-// Performance: no animation libraries, no font @import, no colour
-// extraction. The QR library is dynamic-imported only when the Share
-// section scrolls into view. Below-the-fold images are lazy; only the
-// logo/cover are prioritised.
+// the pill itself follows the business's surface colour.
+// Performance: no animation libraries, no font @import, no client-side
+// colour extraction (the palette is generated once, server-side, when
+// the logo is uploaded). The QR library is dynamic-imported only when
+// the Share section scrolls into view. Below-the-fold images are lazy;
+// only the logo/cover are prioritised.
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -26,23 +28,13 @@ import {
   Music, Ghost, Link as LinkIcon, Star, Send,
   X, Eye, Share2, Copy, Check,
 } from "lucide-react";
+import { resolveBrandPalette, type BrandPalette } from "@/lib/brand";
 
-// ─── Linktree tokens (DESIGN.md) ────────────────────────────────────────────
-const T = {
-  ink: "#000000",
-  inkDeep: "#1E2330",
-  muted: "#676B5F",
-  canvas: "#FFFFFF",
-  canvasWarm: "#F3F3F1",
-  surface: "#EFF0EC",
-  lime: "#D2E823",
-  lavender: "#E9C0E9",
-  mint: "#E0E2D9",
-  purple: "#471E67",
-  purpleDeep: "#502274",
-  blue: "#2665D6",
-} as const;
-
+// ─── Linktree layout tokens (DESIGN.md) ─────────────────────────────────────
+// Only the *shape* language lives here (radii, font). All colours come
+// from the business's brand palette — see resolveBrandPalette() — with
+// the Linktree lime/purple tokens as the fallback for businesses that
+// have no palette stored yet.
 const FONT = "'Link Sans',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
 
 // Platform brand colours — icon chips only; the pill stays Linktree-white.
@@ -55,9 +47,11 @@ const BRAND: Record<string, string> = {
 
 // ─── Small building blocks ──────────────────────────────────────────────────
 
-// Full-pill Linktree button. Primary = lime, secondary = white + hairline
-// border, dark = purple. Compact size is for 2-column grid rows.
+// Full-pill Linktree button. Primary = brand primary, secondary =
+// brand surface + hairline border, dark = brand dark surface.
+// Compact size is for 2-column grid rows.
 function PillButton({
+  brand,
   href,
   children,
   variant = "secondary",
@@ -67,6 +61,7 @@ function PillButton({
   onClick,
   ariaLabel,
 }: {
+  brand: BrandPalette;
   href?: string;
   children: React.ReactNode;
   variant?: "primary" | "secondary" | "dark";
@@ -78,15 +73,15 @@ function PillButton({
 }) {
   const style: React.CSSProperties =
     variant === "primary"
-      ? { background: T.lime, color: T.ink }
+      ? { background: brand.primary, color: brand.onPrimary }
       : variant === "dark"
-        ? { background: T.purple, color: "#FFFFFF" }
-        : { background: T.canvas, color: T.ink, border: "1px solid rgba(0,0,0,0.12)" };
+        ? { background: brand.dark, color: brand.onDark }
+        : { background: brand.surface, color: brand.surfaceText, border: `1px solid ${brand.border}` };
   const cls =
     (size === "compact"
       ? "t6-pill group flex w-full min-h-[52px] items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold"
       : "t6-pill group flex w-full min-h-[56px] items-center justify-center gap-2 rounded-full px-6 py-4 text-base font-medium") +
-    " transition-[filter,transform] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99] " +
+    " transition-[filter,transform] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.99] " +
     className;
   const inner = <span className="flex items-center gap-2.5">{children}</span>;
   if (href) {
@@ -113,8 +108,10 @@ function PillButton({
 }
 
 // Social follow pill for the 2-column grid: brand-coloured icon chip,
-// platform name + action on two compact lines.
+// platform name + action on two compact lines. The pill follows the
+// business's surface colour.
 function SocialGridButton({
+  brand,
   href,
   label,
   action,
@@ -123,6 +120,7 @@ function SocialGridButton({
   onClick,
   ariaLabel,
 }: {
+  brand: BrandPalette;
   href: string;
   label: string;
   action: string;
@@ -138,7 +136,8 @@ function SocialGridButton({
       rel="noreferrer"
       onClick={onClick}
       aria-label={ariaLabel}
-      className="flex min-h-[56px] items-center gap-2.5 rounded-full border border-black/10 bg-white px-3.5 py-2.5 text-left transition-[filter,transform] duration-150 hover:brightness-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99]"
+      style={{ background: brand.surface, borderColor: brand.border }}
+      className="flex min-h-[56px] items-center gap-2.5 rounded-full border px-3.5 py-2.5 text-left transition-[filter,transform] duration-150 hover:brightness-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.99]"
     >
       <span
         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white"
@@ -147,27 +146,28 @@ function SocialGridButton({
         {icon}
       </span>
       <span className="min-w-0 leading-tight">
-        <span className="block truncate text-sm font-bold text-black">{label}</span>
-        <span className="block text-[11px] font-medium text-[#676B5F]">{action}</span>
+        <span className="block truncate text-sm font-bold" style={{ color: brand.surfaceText }}>{label}</span>
+        <span className="block text-[11px] font-medium" style={{ color: brand.textMuted }}>{action}</span>
       </span>
     </a>
   );
 }
 
 // Compact section heading — small, left-aligned, no landing-page bulk.
-function SectionHeading({ children }: { children: React.ReactNode }) {
+function SectionHeading({ brand, children }: { brand: BrandPalette; children: React.ReactNode }) {
   return (
-    <h2 className="text-left text-[15px] font-extrabold leading-snug tracking-[-0.01em] text-black">
+    <h2 className="text-left text-[15px] font-extrabold leading-snug tracking-[-0.01em]" style={{ color: brand.text }}>
       {children}
     </h2>
   );
 }
 
-function Card({ children, id }: { children: React.ReactNode; id?: string }) {
+function Card({ brand, children, id }: { brand: BrandPalette; children: React.ReactNode; id?: string }) {
   return (
     <section
       id={id}
-      className="scroll-mt-20 rounded-[2rem] border border-black/5 bg-white p-5"
+      className="scroll-mt-20 rounded-[2rem] border p-5"
+      style={{ background: brand.cardBackground, borderColor: brand.border }}
     >
       {children}
     </section>
@@ -192,6 +192,9 @@ interface Theme6Business {
   closingDay?: string | null;
   logo?: string | null;
   coverPhoto?: string | null;
+  /** Dynamic brand identity (JSON BrandPalette, generated from the logo).
+      Null → the Linktree fallback palette. */
+  brandPalette?: string | null;
   about?: string | null;
   category?: string | null;
   yearEstd?: string | null;
@@ -237,6 +240,14 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
     business.gallery && typeof business.gallery === "string"
       ? JSON.parse(business.gallery)
       : business.gallery || [];
+
+  // ── Dynamic brand identity ─────────────────────────────────────────────
+  // Every colour on this card comes from the business's own logo
+  // (generated once, server-side, at upload). No stored palette →
+  // the Linktree lime/purple fallback, so the card never breaks.
+  // Memoised: resolveBrandPalette builds a new object each call, and the
+  // QR effect below depends on it.
+  const brand = useMemo(() => resolveBrandPalette(business), [business]);
 
   const socialLinks: { platform: string; url: string }[] = Array.isArray(socialData)
     ? (socialData as { platform: string; url: string }[]).filter((l) => l.url)
@@ -309,7 +320,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           width: 240,
           margin: 2,
           errorCorrectionLevel: "M",
-          color: { dark: T.ink, light: "#FFFFFF" },
+          color: { dark: brand.text, light: brand.cardBackground },
         });
         setQrCodeUrl(url);
       } catch (err) {
@@ -421,6 +432,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
   // already installed or when the browser offers no install path.
   const installAction = !pwaInstalled && pwaPrompt ? (
     <PillButton
+      brand={brand}
       variant="primary"
       size="compact"
       onClick={async () => {
@@ -435,6 +447,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
     </PillButton>
   ) : !pwaInstalled && isIOS ? (
     <PillButton
+      brand={brand}
       variant="primary"
       size="compact"
       onClick={() => document.getElementById("t6-install")?.scrollIntoView({ behavior: "smooth" })}
@@ -454,12 +467,25 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
       <style>{`
         .t6-root { font-family: ${FONT}; }
         .t6-root .t6-pill:hover { transform: translateY(-1px); }
+        .t6-root dt { color: var(--t6-muted); }
+        .t6-root input::placeholder, .t6-root textarea::placeholder { color: var(--t6-muted); }
+        .t6-root input:focus, .t6-root textarea:focus { border-color: var(--t6-outline); }
+        .t6-root :focus-visible { outline-color: var(--t6-outline, #000) !important; }
         @media (prefers-reduced-motion: reduce) {
           .t6-root * { transition: none !important; animation: none !important; }
         }
       `}</style>
 
-      <div id="t6-top" className="t6-root relative min-h-screen w-full overflow-x-hidden bg-[#F3F3F1] text-black">
+      <div
+        id="t6-top"
+        className="t6-root relative min-h-screen w-full overflow-x-hidden"
+        style={{
+          background: brand.pageBackground,
+          color: brand.text,
+          "--t6-muted": brand.textMuted,
+          "--t6-outline": brand.text,
+        } as React.CSSProperties}
+      >
         {/* Views badge */}
         {business.showCardViews && (
           <div className="absolute right-4 top-4 z-[60] flex items-center gap-1.5 rounded-full bg-black/80 px-3 py-1.5 text-[10px] font-bold text-white shadow-lg">
@@ -485,11 +511,12 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
             </div>
           )}
 
-          {/* Logo — 88px with a lime halo, overlapping the cover when set */}
+          {/* Logo — 88px with a brand-primary halo, overlapping the cover when set */}
           <div
-            className={`relative z-10 mx-auto h-[88px] w-[88px] rounded-full bg-[#D2E823] p-[3px] shadow-sm ${
+            className={`relative z-10 mx-auto h-[88px] w-[88px] rounded-full p-[3px] shadow-sm ${
               business.coverPhoto ? "-mt-11" : "mt-1"
             }`}
+            style={{ background: brand.primary }}
           >
             <div className="h-full w-full overflow-hidden rounded-full border-4 border-white bg-white">
               {business.logo ? (
@@ -502,7 +529,10 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-[#EFF0EC] text-3xl font-extrabold text-black">
+                <div
+                  className="flex h-full w-full items-center justify-center text-3xl font-extrabold"
+                  style={{ background: brand.surface, color: brand.surfaceText }}
+                >
                   {business.businessName.charAt(0)}
                 </div>
               )}
@@ -514,48 +544,51 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
             {business.businessName}
           </h1>
           {(business.ownerName || business.designation) && (
-            <p className="mt-0.5 text-sm font-normal leading-[1.4] text-[#676B5F]">
+            <p className="mt-0.5 text-sm font-normal leading-[1.4]" style={{ color: brand.textMuted }}>
               {[business.ownerName, business.designation].filter(Boolean).join(" · ")}
             </p>
           )}
           {business.category && (
-            <span className="mt-2 inline-block rounded-full bg-[#E9C0E9] px-3 py-1 text-[11px] font-semibold text-black">
+            <span
+              className="mt-2 inline-block rounded-full px-3 py-1 text-[11px] font-semibold"
+              style={{ background: brand.chipBg, color: brand.chipText }}
+            >
               {business.category}
             </span>
           )}
           {/* Compact description — max 2 lines. The full text lives nowhere
               else on the page (no duplicate About paragraph). */}
           {business.about && (
-            <p className="mx-auto mt-2.5 line-clamp-2 max-w-[330px] text-sm font-normal leading-[1.5] text-[#1E2330]">
+            <p className="mx-auto mt-2.5 line-clamp-2 max-w-[330px] text-sm font-normal leading-[1.5]" style={{ color: brand.text }}>
               {business.about}
             </p>
           )}
           {business.address && (
-            <p className="mt-2 flex items-center justify-center gap-1.5 text-[13px] text-[#676B5F]">
+            <p className="mt-2 flex items-center justify-center gap-1.5 text-[13px]" style={{ color: brand.textMuted }}>
               <MapPin className="h-3.5 w-3.5 shrink-0" />
               {business.address.split(",").slice(0, 2).join(",").trim()}
             </p>
           )}
-          <p className="mt-1.5 text-[13px] font-medium text-[#676B5F]">
+          <p className="mt-1.5 text-[13px] font-medium" style={{ color: brand.textMuted }}>
             Welcome! Stay connected with us.
           </p>
         </header>
 
         {/* ── Google Review — the primary CTA ──────────────────────────
-            Lime hero card, first action on the page: stars, one-line
-            pitch, big ink-black button. */}
+            Brand-primary hero card, first action on the page: stars,
+            one-line pitch, big contrasting button. */}
         {googleReviewUrl && (
           <div className="mt-4 px-4">
-            <div className="rounded-[1.75rem] bg-[#D2E823] px-5 py-5 text-center">
+            <div className="rounded-[1.75rem] px-5 py-5 text-center" style={{ background: brand.primary }}>
               <div className="flex justify-center gap-0.5" aria-label="5 star rating">
                 {[0, 1, 2, 3, 4].map((i) => (
-                  <Star key={i} className="h-5 w-5 fill-black text-black" />
+                  <Star key={i} className="h-5 w-5 fill-current" style={{ color: brand.onPrimary }} />
                 ))}
               </div>
-              <p className="mt-2 text-lg font-extrabold leading-snug tracking-[-0.01em] text-black">
+              <p className="mt-2 text-lg font-extrabold leading-snug tracking-[-0.01em]" style={{ color: brand.onPrimary }}>
                 Enjoyed Shopping With Us?
               </p>
-              <p className="mt-1 text-[13px] leading-snug text-black/70">
+              <p className="mt-1 text-[13px] leading-snug" style={{ color: brand.onPrimary, opacity: 0.75 }}>
                 Your feedback helps our business grow.
               </p>
               <a
@@ -564,9 +597,10 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                 rel="noreferrer"
                 onClick={() => track("google_review_click")}
                 aria-label="Rate us on Google"
-                className="mt-4 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-black px-6 py-3 text-[15px] font-semibold text-white transition-[filter,transform] duration-150 hover:brightness-[1.15] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99]"
+                style={{ background: brand.heroButtonBg, color: brand.heroButtonText }}
+                className="mt-4 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-[15px] font-semibold transition-[filter,transform] duration-150 hover:brightness-[1.15] focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.99]"
               >
-                <Star className="h-5 w-5 fill-white text-white" /> Rate Us on Google
+                <Star className="h-5 w-5 fill-current" style={{ color: brand.heroButtonText }} /> Rate Us on Google
               </a>
             </div>
           </div>
@@ -577,6 +611,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           <div className="mt-3 grid grid-cols-2 gap-2.5 px-4">
             {youtubeLink && (
               <SocialGridButton
+                brand={brand}
                 href={youtubeLink.url}
                 label="YouTube"
                 action="Subscribe"
@@ -588,6 +623,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
             )}
             {instagramLink && (
               <SocialGridButton
+                brand={brand}
                 href={instagramLink.url}
                 label="Instagram"
                 action="Follow"
@@ -599,6 +635,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
             )}
             {facebookLink && (
               <SocialGridButton
+                brand={brand}
                 href={facebookLink.url}
                 label="Facebook"
                 action="Follow"
@@ -610,6 +647,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
             )}
             {whatsappUrl && (
               <SocialGridButton
+                brand={brand}
                 href={whatsappUrl}
                 label="WhatsApp"
                 action="Connect"
@@ -625,6 +663,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
         {/* ── Quick actions: Save Contact / Install App / Call / Email ── */}
         <div className="mt-2.5 grid grid-cols-2 gap-2.5 px-4">
           <PillButton
+            brand={brand}
             href={`/api/vcard/${business.slug}`}
             variant="dark"
             size="compact"
@@ -638,6 +677,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           {installAction}
           {business.phone && (
             <PillButton
+              brand={brand}
               href={`tel:${business.phone}`}
               size="compact"
               onClick={() => track("call_click")}
@@ -648,6 +688,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           )}
           {business.email && (
             <PillButton
+              brand={brand}
               href={`mailto:${business.email}`}
               size="compact"
               onClick={() => track("email_click")}
@@ -663,6 +704,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           <div className="mt-2.5 grid grid-cols-2 gap-2.5 px-4">
             {websiteUrl && (
               <PillButton
+                brand={brand}
                 href={websiteUrl}
                 size="compact"
                 className={!business.googleMapsUrl ? "col-span-2" : ""}
@@ -674,6 +716,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
             )}
             {business.googleMapsUrl && (
               <PillButton
+                brand={brand}
                 href={business.googleMapsUrl}
                 size="compact"
                 className={!websiteUrl ? "col-span-2" : ""}
@@ -686,7 +729,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           </div>
         )}
 
-        {/* ── Other socials — circular 2.5rem ink containers ───────────── */}
+        {/* ── Other socials — circular 2.5rem containers in the brand ink ─── */}
         {otherSocials.length > 0 && (
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2.5 px-4">
             {otherSocials.map((link, idx) => (
@@ -697,7 +740,8 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                 rel="noreferrer"
                 aria-label={link.platform}
                 onClick={() => track(`${link.platform.toLowerCase()}_click`)}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-black text-white transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-95"
+                style={{ background: brand.text, color: brand.pageBackground }}
+                className="flex h-10 w-10 items-center justify-center rounded-full transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-95"
               >
                 {getSocialIcon(link.platform)}
               </a>
@@ -708,29 +752,29 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
         {/* ── Visit Us — address, hours, closing day, phone ──────────── */}
         {business.address && (
           <div className="mt-3 px-4">
-            <Card>
-              <SectionHeading>Visit Us</SectionHeading>
-              <p className="mt-2.5 flex items-start gap-2 text-sm leading-[1.5] text-[#676B5F]">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-black" />
+            <Card brand={brand}>
+              <SectionHeading brand={brand}>Visit Us</SectionHeading>
+              <p className="mt-2.5 flex items-start gap-2 text-sm leading-[1.5]" style={{ color: brand.textMuted }}>
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0" style={{ color: brand.text }} />
                 {business.address}
               </p>
               {(business.businessHours || business.closingDay || business.phone) && (
-                <dl className="mt-4 space-y-2.5 border-t border-black/5 pt-4 text-sm">
+                <dl className="mt-4 space-y-2.5 border-t pt-4 text-sm" style={{ borderColor: brand.border }}>
                   {business.businessHours && (
                     <div className="flex items-center justify-between gap-4">
-                      <dt className="text-[#676B5F]">Opening Hours</dt>
+                      <dt style={{ color: brand.textMuted }}>Opening Hours</dt>
                       <dd className="text-right font-semibold">{business.businessHours}</dd>
                     </div>
                   )}
                   {business.closingDay && (
                     <div className="flex items-center justify-between gap-4">
-                      <dt className="text-[#676B5F]">Weekly Closing Day</dt>
+                      <dt style={{ color: brand.textMuted }}>Weekly Closing Day</dt>
                       <dd className="text-right font-semibold">{business.closingDay}</dd>
                     </div>
                   )}
                   {business.phone && (
                     <div className="flex items-center justify-between gap-4">
-                      <dt className="text-[#676B5F]">Phone</dt>
+                      <dt style={{ color: brand.textMuted }}>Phone</dt>
                       <dd className="text-right font-semibold">
                         <a href={`tel:${business.phone}`} onClick={() => track("call_click")} className="underline-offset-2 hover:underline">
                           {business.phone}
@@ -748,18 +792,18 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
             header, clamped to 2 lines; it is not repeated here) ─────── */}
         {(business.category || business.yearEstd) && (
           <div className="mt-3 px-4">
-            <Card>
-              <SectionHeading>Business Details</SectionHeading>
+            <Card brand={brand}>
+              <SectionHeading brand={brand}>Business Details</SectionHeading>
               <dl className="mt-3 space-y-2.5 text-sm">
                 {business.category && (
                   <div className="flex items-center justify-between gap-4">
-                    <dt className="text-[#676B5F]">Nature of Business</dt>
+                    <dt style={{ color: brand.textMuted }}>Nature of Business</dt>
                     <dd className="text-right font-semibold">{business.category}</dd>
                   </div>
                 )}
                 {business.yearEstd && (
                   <div className="flex items-center justify-between gap-4">
-                    <dt className="text-[#676B5F]">Year Established</dt>
+                    <dt style={{ color: brand.textMuted }}>Year Established</dt>
                     <dd className="text-right font-semibold">{business.yearEstd}</dd>
                   </div>
                 )}
@@ -771,14 +815,14 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
         {/* ── Services ───────────────────────────────────────────────── */}
         {servicesData.length > 0 && (
           <div className="mt-5 px-4">
-            <SectionHeading>Services &amp; Products</SectionHeading>
+            <SectionHeading brand={brand}>Services &amp; Products</SectionHeading>
             <div className="mt-3 space-y-2.5">
               {(servicesData as Theme6Service[]).map((svc: Theme6Service, idx: number) => {
                 const title = svc.title ?? svc.name ?? "Service";
                 const rawP = (svc.price || "").trim();
                 const displayP = /^\d+$/.test(rawP) ? `₹${Number(rawP).toLocaleString("en-IN")}` : rawP;
                 return (
-                  <article key={idx} className="overflow-hidden rounded-[1.75rem] border border-black/5 bg-white">
+                  <article key={idx} className="overflow-hidden rounded-[1.75rem] border" style={{ background: brand.cardBackground, borderColor: brand.border }}>
                     {svc.image && (
                       <button
                         type="button"
@@ -800,16 +844,17 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                       <div className="flex items-start justify-between gap-3">
                         <h3 className="text-base font-bold leading-snug">{title}</h3>
                         {svc.price && (
-                          <span className="shrink-0 rounded-full bg-[#E9C0E9] px-3 py-1 text-xs font-bold">
+                          <span className="shrink-0 rounded-full px-3 py-1 text-xs font-bold" style={{ background: brand.chipBg, color: brand.chipText }}>
                             {displayP} onwards
                           </span>
                         )}
                       </div>
                       {svc.description && (
-                        <p className="mt-1.5 line-clamp-2 text-sm leading-[1.5] text-[#676B5F]">{svc.description}</p>
+                        <p className="mt-1.5 line-clamp-2 text-sm leading-[1.5]" style={{ color: brand.textMuted }}>{svc.description}</p>
                       )}
                       <div className="mt-3.5">
                         <PillButton
+                          brand={brand}
                           href={`https://wa.me/${business.whatsapp?.replace(/\D/g, "")}?text=Hi, I would like to enquire about: *${encodeURIComponent(title)}*`}
                           variant="primary"
                           size="compact"
@@ -831,7 +876,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
         {galleryData.length > 0 && (
           <div className="mt-5">
             <div className="px-4">
-              <SectionHeading>Gallery</SectionHeading>
+              <SectionHeading brand={brand}>Gallery</SectionHeading>
             </div>
             <div className="mt-3 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {(galleryData as (string | { url?: string })[]).map((item: string | { url?: string }, idx: number) => {
@@ -863,13 +908,13 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
         {/* ── Videos — link out to the channel (no embeds, no API key) ─── */}
         {youtubeLink && (
           <div className="mt-3 px-4">
-            <Card>
-              <SectionHeading>Videos</SectionHeading>
-              <p className="mt-2 text-sm leading-[1.5] text-[#676B5F]">
+            <Card brand={brand}>
+              <SectionHeading brand={brand}>Videos</SectionHeading>
+              <p className="mt-2 text-sm leading-[1.5]" style={{ color: brand.textMuted }}>
                 Watch our latest videos on YouTube.
               </p>
               <div className="mt-3.5">
-                <PillButton href={youtubeLink.url} size="compact" onClick={() => track("youtube_click")} ariaLabel="Watch videos on YouTube">
+                <PillButton brand={brand} href={youtubeLink.url} size="compact" onClick={() => track("youtube_click")} ariaLabel="Watch videos on YouTube">
                   <Youtube className="h-4 w-4" /> Watch on YouTube
                 </PillButton>
               </div>
@@ -880,8 +925,8 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
         {/* ── Google Reviews widget (only when configured) ───────────── */}
         {business.googleReviewWidget && (
           <div className="mt-3 px-4">
-            <Card>
-              <SectionHeading>Customer Reviews</SectionHeading>
+            <Card brand={brand}>
+              <SectionHeading brand={brand}>Customer Reviews</SectionHeading>
               <div ref={reviewRef} className="mt-3 w-full" style={{ minHeight: 100 }} />
             </Card>
           </div>
@@ -889,8 +934,8 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
 
         {/* ── Enquiry — inputs 0.5rem radius, pill lime button ───────── */}
         <div className="mt-3 px-4">
-          <Card>
-            <SectionHeading>Send an Enquiry</SectionHeading>
+          <Card brand={brand}>
+            <SectionHeading brand={brand}>Send an Enquiry</SectionHeading>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -916,24 +961,25 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                 type="text"
                 placeholder="Your Name"
                 required
-                className="w-full rounded-lg border border-black/15 bg-white px-4 py-3 text-base outline-none placeholder:text-[#676B5F] focus:border-black"
+                className="w-full rounded-lg border px-4 py-3 text-base outline-none" style={{ background: brand.surface, borderColor: brand.border, color: brand.surfaceText }}
               />
               <input
                 name="t6phone"
                 type="tel"
                 placeholder="Your Phone Number"
-                className="w-full rounded-lg border border-black/15 bg-white px-4 py-3 text-base outline-none placeholder:text-[#676B5F] focus:border-black"
+                className="w-full rounded-lg border px-4 py-3 text-base outline-none" style={{ background: brand.surface, borderColor: brand.border, color: brand.surfaceText }}
               />
               <textarea
                 name="t6msg"
                 rows={3}
                 placeholder="Your message..."
                 required
-                className="w-full resize-none rounded-lg border border-black/15 bg-white px-4 py-3 text-base outline-none placeholder:text-[#676B5F] focus:border-black"
+                className="w-full resize-none rounded-lg border px-4 py-3 text-base outline-none" style={{ background: brand.surface, borderColor: brand.border, color: brand.surfaceText }}
               />
               <button
                 type="submit"
-                className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#D2E823] px-6 py-3 text-[15px] font-semibold text-black transition-[filter] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99]"
+                style={{ background: brand.primary, color: brand.onPrimary }}
+                className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-[15px] font-semibold transition-[filter] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.99]"
               >
                 Send via WhatsApp <Send className="h-4 w-4" />
               </button>
@@ -943,20 +989,21 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
 
         {/* ── Share card / QR (QR lib loads lazily, see above) ────────── */}
         <div className="mt-3 px-4" ref={shareRef}>
-          <Card>
-            <SectionHeading>Share Card</SectionHeading>
+          <Card brand={brand}>
+            <SectionHeading brand={brand}>Share Card</SectionHeading>
             <div className="mt-3.5 flex flex-col items-center gap-4">
               {qrCodeUrl ? (
-                <div className="rounded-2xl border border-black/5 bg-white p-3 shadow-sm">
+                <div className="rounded-2xl border p-3 shadow-sm" style={{ background: brand.cardBackground, borderColor: brand.border }}>
                   <Image src={qrCodeUrl} alt="QR Code" width={160} height={160} className="rounded-lg" />
                 </div>
               ) : (
-                <div className="h-[160px] w-[160px] animate-pulse rounded-2xl bg-[#EFF0EC]" />
+                <div className="h-[160px] w-[160px] animate-pulse rounded-2xl" style={{ background: brand.surface }} />
               )}
               <div className="flex w-full gap-2.5">
                 <button
                   onClick={copyLink}
-                  className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-full border border-black bg-white px-4 py-3 text-sm font-semibold transition-[filter] duration-150 hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99]"
+                  style={{ background: brand.surface, color: brand.surfaceText, borderColor: brand.text }}
+                  className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-full border px-4 py-3 text-sm font-semibold transition-[filter] duration-150 hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.99]"
                 >
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   {copied ? "Copied!" : "Copy Link"}
@@ -966,7 +1013,8 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                   target="_blank"
                   rel="noreferrer"
                   onClick={() => track("share_click")}
-                  className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-full bg-[#D2E823] px-4 py-3 text-sm font-semibold text-black transition-[filter] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99]"
+                  style={{ background: brand.primary, color: brand.onPrimary }}
+                  className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-[filter] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.99]"
                 >
                   <Share2 className="h-4 w-4" /> Share
                 </a>
@@ -979,9 +1027,9 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
             (Android install lives in the first-screen quick actions.) */}
         {!pwaInstalled && !pwaPrompt && isIOS && (
           <div id="t6-install" className="mt-3 scroll-mt-20 px-4">
-            <Card>
-              <SectionHeading>Install App</SectionHeading>
-              <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm leading-[1.5] text-[#1E2330]">
+            <Card brand={brand}>
+              <SectionHeading brand={brand}>Install App</SectionHeading>
+              <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm leading-[1.5]" style={{ color: brand.text }}>
                 <li>Tap the <strong>Share</strong> button in your browser (square with an arrow).</li>
                 <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
                 <li>Tap <strong>Add</strong> — the card appears on your home screen like an app.</li>
@@ -990,21 +1038,22 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           </div>
         )}
 
-        {/* ── Footer — compact purple strip ──────────────────────────── */}
-        <footer className="mt-5 px-4 pb-4" style={{ background: T.purple }}>
+        {/* ── Footer — compact brand-dark strip ────────────────────────── */}
+        <footer className="mt-5 px-4 pb-4" style={{ background: brand.dark }}>
           <div className="mx-auto max-w-[398px] py-6 text-center">
-            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-white/70">
+            <p className="text-[11px] font-medium uppercase tracking-[0.2em]" style={{ color: brand.onDark, opacity: 0.7 }}>
               Create your own digital card
             </p>
             <Link
               href="/"
-              className="mt-4 inline-flex min-h-[52px] items-center justify-center rounded-full bg-[#D2E823] px-7 py-3 text-[15px] font-semibold text-black transition-[filter] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:scale-[0.99]"
+              style={{ background: brand.primary, color: brand.onPrimary }}
+              className="mt-4 inline-flex min-h-[52px] items-center justify-center rounded-full px-7 py-3 text-[15px] font-semibold transition-[filter] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.99]"
             >
               Get Started Now
             </Link>
             <div className="mt-5 flex flex-col items-center gap-0.5 opacity-70">
-              <span className="text-[10px] font-medium uppercase tracking-widest text-white">Powered by</span>
-              <span className="text-sm font-extrabold tracking-tight text-white">EVisitingCard</span>
+              <span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: brand.onDark }}>Powered by</span>
+              <span className="text-sm font-extrabold tracking-tight" style={{ color: brand.onDark }}>EVisitingCard</span>
             </div>
           </div>
         </footer>

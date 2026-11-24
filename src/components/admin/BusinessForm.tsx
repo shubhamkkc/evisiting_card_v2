@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { Search, Loader2, Image as ImageIcon, Upload, Plus, Trash2, Facebook, Instagram, Twitter, Linkedin, Youtube, Globe, MapPin } from "lucide-react";
@@ -53,6 +53,7 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
       slug: "", businessName: "", ownerName: "", designation: "",
       phone: "", whatsapp: "", email: "", website: "", address: "",
       googleMapsUrl: "", logo: "", coverPhoto: "", about: "", category: "",
+      brandPalette: "",
       yearEstd: "", theme: "theme1", themeColor: "#0ea5e9", isActive: true,
       showCardViews: true,
       ownerEmail: "", ownerPassword: "",
@@ -64,6 +65,52 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
       gallery: [],
     };
   });
+
+  // ── Dynamic brand identity ──────────────────────────────────────────────
+  // The card's colours are generated from the logo (see src/lib/brand.ts).
+  // A failure here never blocks the logo upload or the save: the previous
+  // palette (or the Linktree fallback) simply stays in place.
+  const [generatingBrand, setGeneratingBrand] = useState(false);
+  const brandAutoTried = useRef(false);
+
+  let brandPreview: any = null;
+  try {
+    brandPreview = formData.brandPalette ? JSON.parse(formData.brandPalette) : null;
+  } catch {
+    brandPreview = null;
+  }
+
+  const generateBrand = async (logoUrl: string) => {
+    if (!logoUrl) return;
+    setGeneratingBrand(true);
+    try {
+      const res = await fetch("/api/brand/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ logoUrl }),
+      });
+      const data = await res.json();
+      if (data.palette) {
+        setFormData((prev: any) => ({
+          ...prev,
+          brandPalette: JSON.stringify(data.palette),
+        }));
+      }
+    } catch {
+      // keep the existing palette
+    }
+    setGeneratingBrand(false);
+  };
+
+  // Backfill: a business with a logo but no palette gets one generated the
+  // first time its edit page opens; saving the form persists it.
+  useEffect(() => {
+    if (isEditing && !brandAutoTried.current && formData.logo && !formData.brandPalette) {
+      brandAutoTried.current = true;
+      generateBrand(formData.logo);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleFileUpload = async (file: File, type: 'logo' | 'coverPhoto' | 'gallery') => {
     setUploading(type);
@@ -93,6 +140,10 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
           setFormData((prev: any) => ({ ...prev, gallery: [...(prev.gallery || []), data.url] }));
         } else {
           setFormData((prev: any) => ({ ...prev, [type]: data.url }));
+        }
+        // A new logo means a new brand identity: regenerate the palette.
+        if (type === 'logo') {
+          generateBrand(data.url);
         }
         toast.success("Uploaded successfully!");
       }
@@ -437,6 +488,40 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
                 <input type="file" className="hidden" accept="image/*" onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'logo')} />
               </label>
             </div>
+            {/* Brand colours, auto-generated from the logo */}
+            {formData.logo && (
+              <div className="mt-3">
+                {generatingBrand ? (
+                  <p className="text-xs text-gray-500">Generating brand colours from your logo…</p>
+                ) : brandPreview ? (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {[brandPreview.primary, brandPreview.secondary, brandPreview.accent, brandPreview.dark, brandPreview.pageBackground]
+                      .filter(Boolean)
+                      .map((c: string) => (
+                        <span key={c} title={c} className="w-6 h-6 rounded-full border border-gray-200" style={{ backgroundColor: c }} />
+                      ))}
+                    <span className="text-xs text-gray-500 capitalize">
+                      {brandPreview.archetype} · {brandPreview.mode} theme
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => generateBrand(formData.logo)}
+                      className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                    >
+                      Regenerate
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => generateBrand(formData.logo)}
+                    className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+                  >
+                    Generate brand colours from logo
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           <div>

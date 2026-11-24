@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { Loader2, Image as ImageIcon, Upload, Plus, Trash2 } from "lucide-react";
@@ -66,6 +66,10 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
         } else {
           setFormData((prev: any) => ({ ...prev, [type]: data.url }));
         }
+        // A new logo means a new brand identity: regenerate the palette.
+        if (type === "logo") {
+          generateBrand(data.url);
+        }
         toast.success("Uploaded successfully!");
       }
     } catch {
@@ -73,6 +77,51 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
     }
     setUploading(null);
   };
+
+  // ── Dynamic brand identity (see src/lib/brand.ts) ───────────────────────
+  // The card's colours are generated from the logo. A failure here never
+  // blocks the logo upload or the save.
+  const [generatingBrand, setGeneratingBrand] = useState(false);
+  const brandAutoTried = useRef(false);
+
+  let brandPreview: any = null;
+  try {
+    brandPreview = formData.brandPalette ? JSON.parse(formData.brandPalette) : null;
+  } catch {
+    brandPreview = null;
+  }
+
+  const generateBrand = async (logoUrl: string) => {
+    if (!logoUrl) return;
+    setGeneratingBrand(true);
+    try {
+      const res = await fetch("/api/brand/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ logoUrl }),
+      });
+      const data = await res.json();
+      if (data.palette) {
+        setFormData((prev: any) => ({
+          ...prev,
+          brandPalette: JSON.stringify(data.palette),
+        }));
+      }
+    } catch {
+      // keep the existing palette
+    }
+    setGeneratingBrand(false);
+  };
+
+  // Backfill: a business with a logo but no palette gets one generated the
+  // first time its edit page opens; saving the form persists it.
+  useEffect(() => {
+    if (!brandAutoTried.current && formData.logo && !formData.brandPalette) {
+      brandAutoTried.current = true;
+      generateBrand(formData.logo);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const removeGalleryImage = async (index: number) => {
     const imageUrl = formData.gallery[index];
@@ -335,6 +384,40 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
                   <input type="file" style={{ display: "none" }} accept="image/*" onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0], "logo")} />
                 </label>
               </div>
+              {/* Brand colours, auto-generated from the logo */}
+              {formData.logo && (
+                <div style={{ marginTop: "12px" }}>
+                  {generatingBrand ? (
+                    <p style={{ fontSize: "12px", color: "#64748b" }}>Generating brand colours from your logo…</p>
+                  ) : brandPreview ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                      {[brandPreview.primary, brandPreview.secondary, brandPreview.accent, brandPreview.dark, brandPreview.pageBackground]
+                        .filter(Boolean)
+                        .map((c: string) => (
+                          <span key={c} title={c} style={{ width: "24px", height: "24px", borderRadius: "50%", border: "1px solid #e2e8f0", backgroundColor: c }} />
+                        ))}
+                      <span style={{ fontSize: "12px", color: "#64748b", textTransform: "capitalize" }}>
+                        {brandPreview.archetype} · {brandPreview.mode} theme
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => generateBrand(formData.logo)}
+                        style={{ fontSize: "12px", fontWeight: 500, color: "#4f46e5", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                      >
+                        Regenerate
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => generateBrand(formData.logo)}
+                      style={{ fontSize: "12px", fontWeight: 500, color: "#4f46e5", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                    >
+                      Generate brand colours from logo
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Cover Photo */}

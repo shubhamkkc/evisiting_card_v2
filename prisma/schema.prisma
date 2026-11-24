@@ -25,6 +25,9 @@ model Business {
   closingDay    String?
   logo               String?
   coverPhoto    String?
+  /** Dynamic brand identity: JSON BrandPalette generated from the logo
+      (see src/lib/brand.ts). Null → the Linktree fallback palette. */
+  brandPalette  String?
   about         String?
   category      String?
   yearEstd      String?
