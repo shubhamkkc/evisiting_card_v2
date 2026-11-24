@@ -143,14 +143,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // ── Titles & Descriptions ────────────────────────────────────────────────
   const title = business.category && city
     ? `${business.businessName} | ${business.category} in ${city}`
-    : `${business.businessName} — Digital Business Card | EVisitingCard`;
+    : `${business.businessName} — Digital Business Card | GrowX Digital Card`;
 
   const description =
     business.category && city
       ? `${business.businessName}, ${area} ${city} mein professional ${business.category} services.${mainService ? ` ${mainService} packages available.` : ""} Enquiry karein.`
-      : `View ${business.businessName}'s digital visiting card. Contact details, services, gallery and more. Powered by EVisitingCard.`;
+      : `View ${business.businessName}'s digital visiting card. Contact details, services, gallery and more. Powered by GrowX Digital Card.`;
 
-  const baseUrl = (process.env.NEXTAUTH_URL || "https://evisitingcardv2.netlify.app").replace(/\/$/, "");
+  const baseUrl = (process.env.NEXTAUTH_URL || "https://card.growxdigitech.com").replace(/\/$/, "");
   const cardUrl = `${baseUrl}/${slug}`;
   const ogImage = business.coverPhoto || business.logo || null;
 
@@ -170,7 +170,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       url: cardUrl,
       type: "website",
-      siteName: "EVisitingCard",
+      siteName: "GrowX Digital Card",
       locale: "en_IN",
       images: ogImage
         ? [
@@ -206,7 +206,7 @@ export default async function CardPage({ params }: Props) {
   }
 
   // ── JSON-LD data ──────────────────────────────────────────────────────────
-  const baseUrl = (process.env.NEXTAUTH_URL || "https://evisitingcardv2.netlify.app").replace(/\/$/, "");
+  const baseUrl = (process.env.NEXTAUTH_URL || "https://card.growxdigitech.com").replace(/\/$/, "");
   const cardUrl = `${baseUrl}/${slug}`;
   const schemaType = resolveSchemaType(business.category);
   const addr = parseAddress(business.address);

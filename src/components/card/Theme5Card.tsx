@@ -712,7 +712,7 @@ export default function Theme5Card({ business, viewCount }: { business: any; vie
             <div className="mt-8 pb-8 flex flex-col items-center gap-1 opacity-40">
               <span className="text-[10px] uppercase font-medium tracking-widest text-gray-400">Powered by</span>
               <span className="text-sm font-black t5-gtext" style={{ backgroundImage: gradH }}>
-                EVisitingCard
+                GrowX Digital Card
               </span>
             </div>
           </div>

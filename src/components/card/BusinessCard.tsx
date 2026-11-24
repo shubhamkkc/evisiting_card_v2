@@ -209,7 +209,7 @@ export default function BusinessCard({ business }: { business: Business }) {
           </Link>
           <div className={`mt-8 flex flex-col items-center gap-1 ${business.theme === 'theme4' ? 'opacity-60' : 'opacity-40'}`}>
             <span className={`text-[10px] uppercase font-medium tracking-widest ${business.theme === 'theme4' ? 'text-[var(--gold-light)]' : ''}`}>Powered by</span>
-            <span className={`text-sm font-black tracking-tight ${business.theme === 'theme4' ? 'text-[var(--gold)] text-lg' : ''}`}>EVisitingCard</span>
+            <span className={`text-sm font-black tracking-tight ${business.theme === 'theme4' ? 'text-[var(--gold)] text-lg' : ''}`}>GrowX Digital Card</span>
           </div>
         </div>
       </div>

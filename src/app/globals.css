@@ -12,6 +12,19 @@
   --font-serif: "DM Serif Display", serif;
   --font-sans: "DM Sans", sans-serif;
 
+  /* GrowX Digitech brand — card.growxdigitech.com landing pages.
+     Dark violet-midnight canvas, white text, orange brand accent,
+     lime keyword chip. Matches growxdigitech.com DESIGN.md. */
+  --color-gx-night: #150f23;
+  --color-gx-canvas: #1f1633;
+  --color-gx-orange: #ff7a00;
+  --color-gx-lime: #c2ef4e;
+  --color-gx-violet: #6a5fc1;
+  --color-gx-violet-deep: #422082;
+  --color-gx-hairline: #362d59;
+  --font-gx-display: "Space Grotesk", "Rubik", ui-sans-serif, system-ui, sans-serif;
+  --font-gx-body: "Rubik", -apple-system, system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
+
   /* Theme 4 Cinematic Dark Luxury Palette */
   --bg-primary: #0d0d0d;
   --bg-secondary: #141414;

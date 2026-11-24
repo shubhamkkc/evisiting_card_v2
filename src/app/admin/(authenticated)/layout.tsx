@@ -19,7 +19,7 @@ export default async function AdminLayout({
     <div className="min-h-screen bg-gray-50 flex">
       <aside className="w-64 bg-white border-r border-gray-200 hidden md:block">
         <div className="h-16 flex items-center px-6 border-b border-gray-200">
-          <span className="font-bold text-lg text-blue-600">EVisitingCard</span>
+          <span className="font-bold text-lg text-blue-600">GrowX Digital Card</span>
         </div>
         <nav className="p-4 space-y-2">
           <Link href="/admin/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-50 text-blue-700 font-medium">

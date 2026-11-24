@@ -14,14 +14,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL || "https://evisitingcardv2.netlify.app"),
+  metadataBase: new URL(process.env.NEXTAUTH_URL || "https://card.growxdigitech.com"),
   title: {
-    default: "Digital Business Card for Indian Businesses | EVisitingCard — ₹499/year",
-    template: "%s | EVisitingCard",
+    default: "Digital Business Card for Indian Businesses | GrowX Digital Card — ₹499/year",
+    template: "%s | GrowX Digital Card",
   },
   description: "Get your digital visiting card made in 24 hours. Trusted by electricians, photographers, CA firms & shops across India. Starting ₹499/year.",
-  applicationName: "EVisitingCard",
-  authors: [{ name: "EVisitingCard Team" }],
+  applicationName: "GrowX Digital Card",
+  authors: [{ name: "GrowX Digitech" }],
   keywords: [
     "digital business card India",
     "digital visiting card online",
@@ -32,9 +32,9 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://evisitingcardv2.netlify.app",
-    siteName: "EVisitingCard",
-    title: "Digital Business Card for Indian Businesses | EVisitingCard — ₹499/year",
+    url: "https://card.growxdigitech.com",
+    siteName: "GrowX Digital Card",
+    title: "Digital Business Card for Indian Businesses | GrowX Digital Card — ₹499/year",
     description: "Get your digital visiting card made in 24 hours. Trusted by electricians, photographers, CA firms & shops across India. Starting ₹499/year.",
   },
   icons: {
@@ -61,7 +61,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital,wght@0,400;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital,wght@0,400;1,400&family=DM+Sans:wght@300;400;500&family=Space+Grotesk:wght@500;600;700&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

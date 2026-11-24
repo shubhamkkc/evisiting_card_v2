@@ -65,7 +65,7 @@ export default function OfflinePage() {
       >
         {retrying ? "Retrying…" : "Try again"}
       </button>
-      <p style={{ fontSize: 12, color: "#676B5F", margin: 0 }}>Powered by EVisitingCard</p>
+      <p style={{ fontSize: 12, color: "#676B5F", margin: 0 }}>Powered by GrowX Digital Card</p>
     </main>
   );
 }

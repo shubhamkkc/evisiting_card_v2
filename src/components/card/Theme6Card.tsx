@@ -1053,7 +1053,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
             </Link>
             <div className="mt-5 flex flex-col items-center gap-0.5 opacity-70">
               <span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: brand.onDark }}>Powered by</span>
-              <span className="text-sm font-extrabold tracking-tight" style={{ color: brand.onDark }}>EVisitingCard</span>
+              <span className="text-sm font-extrabold tracking-tight" style={{ color: brand.onDark }}>GrowX Digital Card</span>
             </div>
           </div>
         </footer>

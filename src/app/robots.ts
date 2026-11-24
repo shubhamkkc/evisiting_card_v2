@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = (process.env.NEXTAUTH_URL || 'https://evisitingcardv2.netlify.app').replace(/\/$/, '');
+  const baseUrl = (process.env.NEXTAUTH_URL || 'https://card.growxdigitech.com').replace(/\/$/, '');
   
   return {
     rules: {

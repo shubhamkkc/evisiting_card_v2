@@ -497,7 +497,7 @@ export default function Theme4Card({ business }: { business: Business }) {
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#d4af70]/40 to-transparent" />
           <div className="text-center">
              <p className="text-[10px] tracking-[5px] text-[#57534e] uppercase font-black mb-3">Crafted with Prestige</p>
-             <p className="font-serif text-3xl text-[#d4af70] tracking-tighter opacity-90">EVisitingCard</p>
+             <p className="font-serif text-3xl text-[#d4af70] tracking-tighter opacity-90">GrowX Digital Card</p>
           </div>
           <Separator className="bg-white/[0.03] w-full" />
           <motion.a href="/" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
