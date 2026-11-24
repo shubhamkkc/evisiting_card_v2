@@ -1,27 +1,29 @@
 "use client";
 
-// ─── Theme 6 — Linktree ─────────────────────────────────────────────────────
-// Faithful adaptation of the Linktree design system (DESIGN.md, OpenDesignMD):
-//   ink #000000 · canvas-warm #F3F3F1 · surface-lime #D2E823 (primary CTAs only)
-//   accent-purple #471E67 / deep #502274 (conversion/footer stage + hover)
-//   surface-lavender #E9C0E9 (badges) · muted #676B5F (secondary text)
-//   Pill buttons: radius 9999px, 1rem–1.25rem vertical / 1.5rem horizontal
-//   Cards: 2rem radius, 1.5rem padding · flat colour, no heavy shadows
-//   Type: Link Sans scale (20px/800 profile name, 16px/400 body, 16px/500 buttons)
-//   Link Sans is commercial — no webfont is downloaded; system-ui stack is
-//   used at the same weights/sizes so nothing render-blocks on 2G/3G.
-// Performance: no animation libraries, no font @import, no colour extraction.
-// The QR library is dynamic-imported only when the Share section scrolls into
-// view. Below-the-fold images are lazy; only the logo/cover are prioritised.
+// ─── Theme 6 — Linktree (redesign) ──────────────────────────────────────────
+// QR customer-engagement page. First screen, in order: profile → Google
+// Review hero (the primary CTA) → social follow grid → quick actions
+// (Save Contact / Install App / Call / Email) → Website / Maps. Everything
+// below the fold is compact: small left-aligned headings, 12px gaps,
+// no duplicate description, no bottom nav, no decorative banner art.
+// Design tokens (DESIGN.md, OpenDesignMD): ink #000000 · canvas-warm
+// #F3F3F1 · surface-lime #D2E823 (primary CTA) · accent-purple #471E67
+// · surface-lavender #E9C0E9 · muted #676B5F. Pill buttons radius 9999px.
+// Social pills carry each platform's own brand colour on the icon chip
+// (YouTube red, Instagram gradient, Facebook blue, WhatsApp green) while
+// the pill itself stays Linktree-white.
+// Performance: no animation libraries, no font @import, no colour
+// extraction. The QR library is dynamic-imported only when the Share
+// section scrolls into view. Below-the-fold images are lazy; only the
+// logo/cover are prioritised.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
   Phone, MessageCircle, Mail, Globe, MapPin, Download,
-  Home, Info, ShoppingBag, Image as ImageIcon, Send,
   Facebook, Instagram, Linkedin, Youtube, Twitter,
-  Music, Ghost, Link as LinkIcon, Star,
+  Music, Ghost, Link as LinkIcon, Star, Send,
   X, Eye, Share2, Copy, Check,
 } from "lucide-react";
 
@@ -43,14 +45,24 @@ const T = {
 
 const FONT = "'Link Sans',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif";
 
+// Platform brand colours — icon chips only; the pill stays Linktree-white.
+const BRAND: Record<string, string> = {
+  youtube: "#FF0000",
+  instagram: "linear-gradient(45deg,#f9ce34,#ee2a7b,#6228d7)",
+  facebook: "#1877F2",
+  whatsapp: "#25D366",
+};
+
 // ─── Small building blocks ──────────────────────────────────────────────────
 
-// Full-pill Linktree button. Primary = lime, secondary = white + 1px ink
-// border, dark = purple (footer/conversion). Min 56px touch target.
+// Full-pill Linktree button. Primary = lime, secondary = white + hairline
+// border, dark = purple. Compact size is for 2-column grid rows.
 function PillButton({
   href,
   children,
   variant = "secondary",
+  size = "default",
+  className = "",
   download,
   onClick,
   ariaLabel,
@@ -58,6 +70,8 @@ function PillButton({
   href?: string;
   children: React.ReactNode;
   variant?: "primary" | "secondary" | "dark";
+  size?: "default" | "compact";
+  className?: string;
   download?: boolean;
   onClick?: () => void;
   ariaLabel?: string;
@@ -67,9 +81,13 @@ function PillButton({
       ? { background: T.lime, color: T.ink }
       : variant === "dark"
         ? { background: T.purple, color: "#FFFFFF" }
-        : { background: T.canvas, color: T.ink, border: `1px solid ${T.ink}` };
+        : { background: T.canvas, color: T.ink, border: "1px solid rgba(0,0,0,0.12)" };
   const cls =
-    "t6-pill group flex w-full min-h-[56px] items-center justify-center gap-2 rounded-full px-6 py-4 text-base font-medium transition-[filter,transform] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99]";
+    (size === "compact"
+      ? "t6-pill group flex w-full min-h-[52px] items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold"
+      : "t6-pill group flex w-full min-h-[56px] items-center justify-center gap-2 rounded-full px-6 py-4 text-base font-medium") +
+    " transition-[filter,transform] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99] " +
+    className;
   const inner = <span className="flex items-center gap-2.5">{children}</span>;
   if (href) {
     const external = href.startsWith("http");
@@ -94,9 +112,52 @@ function PillButton({
   );
 }
 
+// Social follow pill for the 2-column grid: brand-coloured icon chip,
+// platform name + action on two compact lines.
+function SocialGridButton({
+  href,
+  label,
+  action,
+  chip,
+  icon,
+  onClick,
+  ariaLabel,
+}: {
+  href: string;
+  label: string;
+  action: string;
+  chip: string;
+  icon: React.ReactNode;
+  onClick?: () => void;
+  ariaLabel?: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      className="flex min-h-[56px] items-center gap-2.5 rounded-full border border-black/10 bg-white px-3.5 py-2.5 text-left transition-[filter,transform] duration-150 hover:brightness-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99]"
+    >
+      <span
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white"
+        style={{ background: chip }}
+      >
+        {icon}
+      </span>
+      <span className="min-w-0 leading-tight">
+        <span className="block truncate text-sm font-bold text-black">{label}</span>
+        <span className="block text-[11px] font-medium text-[#676B5F]">{action}</span>
+      </span>
+    </a>
+  );
+}
+
+// Compact section heading — small, left-aligned, no landing-page bulk.
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-center text-[28px] font-medium leading-[1.3] tracking-[-0.01em] text-black">
+    <h2 className="text-left text-[15px] font-extrabold leading-snug tracking-[-0.01em] text-black">
       {children}
     </h2>
   );
@@ -106,7 +167,7 @@ function Card({ children, id }: { children: React.ReactNode; id?: string }) {
   return (
     <section
       id={id}
-      className="scroll-mt-20 rounded-[2rem] border border-black/5 bg-white p-6"
+      className="scroll-mt-20 rounded-[2rem] border border-black/5 bg-white p-5"
     >
       {children}
     </section>
@@ -186,8 +247,6 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
       : [];
 
   // ── QR engagement: priority socials, review link, WhatsApp ──────────────
-  // Priority follow buttons (full pills, first screen): YouTube, Instagram,
-  // Facebook, WhatsApp. Everything else stays as small icon circles.
   const findSocial = (...keys: string[]) =>
     socialLinks.find((l) => keys.includes(l.platform.toLowerCase()));
   const youtubeLink = findSocial("youtube");
@@ -196,7 +255,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
   const whatsappSocial = findSocial("whatsapp");
   const reviewLink = findSocial("googlereview", "google", "review");
   const priorityKeys = new Set(["youtube", "instagram", "facebook", "whatsapp"]);
-  // The review link has its own prominent section — don't duplicate it here.
+  // The review link has its own hero section — don't duplicate it here.
   const iconExcludes = new Set([...priorityKeys, "googlereview", "google", "review"]);
   const otherSocials = socialLinks.filter((l) => !iconExcludes.has(l.platform.toLowerCase()));
 
@@ -357,34 +416,50 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
       : `https://${business.website}`
     : null;
 
-  const navItems = [
-    { id: "t6-top", label: "Home", icon: <Home className="h-5 w-5" /> },
-    { id: "t6-about", label: "About", icon: <Info className="h-5 w-5" /> },
-    { id: "t6-services", label: "Services", icon: <ShoppingBag className="h-5 w-5" /> },
-    { id: "t6-gallery", label: "Gallery", icon: <ImageIcon className="h-5 w-5" /> },
-    { id: "t6-enquiry", label: "Enquiry", icon: <Send className="h-5 w-5" /> },
-  ];
+  // Install App action for the quick-actions grid: native prompt on
+  // Android/Chrome, or scroll to the iOS steps on iPhone. Hidden when
+  // already installed or when the browser offers no install path.
+  const installAction = !pwaInstalled && pwaPrompt ? (
+    <PillButton
+      variant="primary"
+      size="compact"
+      onClick={async () => {
+        pwaPrompt.prompt();
+        const choice = await pwaPrompt.userChoice;
+        if (choice.outcome === "accepted") track("pwa_install");
+        setPwaPrompt(null);
+      }}
+      ariaLabel="Install this card as an app"
+    >
+      <Download className="h-4 w-4" /> Install App
+    </PillButton>
+  ) : !pwaInstalled && isIOS ? (
+    <PillButton
+      variant="primary"
+      size="compact"
+      onClick={() => document.getElementById("t6-install")?.scrollIntoView({ behavior: "smooth" })}
+      ariaLabel="Install this card as an app"
+    >
+      <Download className="h-4 w-4" /> Install App
+    </PillButton>
+  ) : null;
 
-  const scrollTo = (id: string) => {
-    if (id === "t6-top") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-  };
+  // Quick-action grid: Save Contact is always there; Call / Email /
+  // Install App join it when available. A lone button spans both columns.
+  const quickCount =
+    1 + (installAction ? 1 : 0) + (business.phone ? 1 : 0) + (business.email ? 1 : 0);
 
   return (
     <>
       <style>{`
         .t6-root { font-family: ${FONT}; }
         .t6-root .t6-pill:hover { transform: translateY(-1px); }
-        .t6-root .t6-pill-dark:hover { background: ${T.purpleDeep} !important; }
         @media (prefers-reduced-motion: reduce) {
           .t6-root * { transition: none !important; animation: none !important; }
         }
       `}</style>
 
-      <div id="t6-top" className="t6-root relative min-h-screen w-full overflow-x-hidden bg-[#F3F3F1] pb-24 text-black">
+      <div id="t6-top" className="t6-root relative min-h-screen w-full overflow-x-hidden bg-[#F3F3F1] text-black">
         {/* Views badge */}
         {business.showCardViews && (
           <div className="absolute right-4 top-4 z-[60] flex items-center gap-1.5 rounded-full bg-black/80 px-3 py-1.5 text-[10px] font-bold text-white shadow-lg">
@@ -394,10 +469,11 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
         )}
 
         {/* ── Profile header ─────────────────────────────────────────── */}
-        <header className="px-4 pt-6 text-center">
-          {/* Cover banner (if set) else flat Linktree colour blocks */}
-          {business.coverPhoto ? (
-            <div className="relative mx-auto h-40 w-full max-w-[398px] overflow-hidden rounded-[2rem]">
+        <header className="px-4 pt-5 text-center">
+          {/* Cover banner only when the business has one — no decorative
+              art when there is none. */}
+          {business.coverPhoto && (
+            <div className="relative mx-auto h-32 w-full max-w-[398px] overflow-hidden rounded-[1.5rem]">
               <Image
                 src={business.coverPhoto}
                 alt=""
@@ -407,141 +483,212 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                 className="object-cover"
               />
             </div>
-          ) : (
-            <div
-              aria-hidden
-              className="relative mx-auto h-24 w-full max-w-[398px] overflow-hidden rounded-[2rem]"
-              style={{ background: T.lavender }}
-            >
-              <div className="absolute -left-6 -top-10 h-28 w-28 rounded-full" style={{ background: T.lime }} />
-              <div className="absolute -bottom-8 right-6 h-24 w-24 rounded-full" style={{ background: T.purple }} />
-              <div className="absolute right-24 top-4 h-10 w-10 rounded-full" style={{ background: T.mint }} />
-            </div>
           )}
 
-          {/* Avatar — 96px circle, white ring, overlapping the banner */}
-          <div className="relative z-10 mx-auto -mt-12 h-24 w-24 overflow-hidden rounded-full border-4 border-white bg-white shadow-sm">
-            {business.logo ? (
-              <Image
-                src={business.logo}
-                alt={business.businessName}
-                width={96}
-                height={96}
-                priority
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-[#EFF0EC] text-4xl font-extrabold text-black">
-                {business.businessName.charAt(0)}
-              </div>
-            )}
+          {/* Logo — 88px with a lime halo, overlapping the cover when set */}
+          <div
+            className={`relative z-10 mx-auto h-[88px] w-[88px] rounded-full bg-[#D2E823] p-[3px] shadow-sm ${
+              business.coverPhoto ? "-mt-11" : "mt-1"
+            }`}
+          >
+            <div className="h-full w-full overflow-hidden rounded-full border-4 border-white bg-white">
+              {business.logo ? (
+                <Image
+                  src={business.logo}
+                  alt={business.businessName}
+                  width={88}
+                  height={88}
+                  priority
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-[#EFF0EC] text-3xl font-extrabold text-black">
+                  {business.businessName.charAt(0)}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Name / designation / business */}
-          <h1 className="mt-4 text-xl font-extrabold leading-[1.3] tracking-[-0.02em]">
+          <h1 className="mt-3 text-[22px] font-extrabold leading-[1.25] tracking-[-0.02em]">
             {business.businessName}
           </h1>
           {(business.ownerName || business.designation) && (
-            <p className="mt-1 text-base font-normal leading-[1.5] text-[#676B5F]">
+            <p className="mt-0.5 text-sm font-normal leading-[1.4] text-[#676B5F]">
               {[business.ownerName, business.designation].filter(Boolean).join(" · ")}
             </p>
           )}
           {business.category && (
-            <span className="mt-3 inline-block rounded-full bg-[#E9C0E9] px-4 py-1.5 text-xs font-medium text-black">
+            <span className="mt-2 inline-block rounded-full bg-[#E9C0E9] px-3 py-1 text-[11px] font-semibold text-black">
               {business.category}
             </span>
           )}
-          <p className="mt-3 text-sm font-medium text-[#676B5F]">
-            Welcome! Stay connected with us.
-          </p>
-          {business.address && (
-            <p className="mt-1 flex items-center justify-center gap-1.5 text-sm text-[#676B5F]">
-              <MapPin className="h-4 w-4 shrink-0" />
-              {business.address.split(",").slice(0, 2).join(",").trim()}
-            </p>
-          )}
+          {/* Compact description — max 2 lines. The full text lives nowhere
+              else on the page (no duplicate About paragraph). */}
           {business.about && (
-            <p className="mx-auto mt-4 max-w-[340px] text-base font-normal leading-[1.5] tracking-[0.01em] text-[#1E2330]">
+            <p className="mx-auto mt-2.5 line-clamp-2 max-w-[330px] text-sm font-normal leading-[1.5] text-[#1E2330]">
               {business.about}
             </p>
           )}
+          {business.address && (
+            <p className="mt-2 flex items-center justify-center gap-1.5 text-[13px] text-[#676B5F]">
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              {business.address.split(",").slice(0, 2).join(",").trim()}
+            </p>
+          )}
+          <p className="mt-1.5 text-[13px] font-medium text-[#676B5F]">
+            Welcome! Stay connected with us.
+          </p>
         </header>
 
-        {/* ── Social follow pills — first screen, QR engagement ────────── */}
-        {(youtubeLink || instagramLink || facebookLink || whatsappUrl) && (
-          <div className="mt-6 space-y-4 px-4">
-            {youtubeLink && (
-              <PillButton href={youtubeLink.url} onClick={() => track("youtube_click")} ariaLabel="Subscribe on YouTube">
-                <Youtube className="h-5 w-5" /> YouTube — Subscribe
-              </PillButton>
-            )}
-            {instagramLink && (
-              <PillButton href={instagramLink.url} onClick={() => track("instagram_click")} ariaLabel="Follow on Instagram">
-                <Instagram className="h-5 w-5" /> Instagram — Follow
-              </PillButton>
-            )}
-            {facebookLink && (
-              <PillButton href={facebookLink.url} onClick={() => track("facebook_click")} ariaLabel="Follow on Facebook">
-                <Facebook className="h-5 w-5" /> Facebook — Follow
-              </PillButton>
-            )}
-            {whatsappUrl && (
-              <PillButton href={whatsappUrl} onClick={() => track("whatsapp_click")} ariaLabel="Connect on WhatsApp">
-                <MessageCircle className="h-5 w-5" /> WhatsApp — Connect
-              </PillButton>
-            )}
-          </div>
-        )}
-
-        {/* ── Google Review — prominent, right under the social buttons ── */}
+        {/* ── Google Review — the primary CTA ──────────────────────────
+            Lime hero card, first action on the page: stars, one-line
+            pitch, big ink-black button. */}
         {googleReviewUrl && (
-          <div className="mt-6 px-4">
-            <Card>
-              <h2 className="text-center text-[28px] font-medium leading-[1.3] tracking-[-0.01em]">
-                Enjoyed Shopping With Us?
-              </h2>
-              <p className="mt-2 text-center text-base leading-[1.5] text-[#676B5F]">
-                Your feedback helps our business grow. Share your genuine experience with us.
-              </p>
-              <div className="mt-5 flex justify-center gap-1" aria-label="5 star rating">
+          <div className="mt-4 px-4">
+            <div className="rounded-[1.75rem] bg-[#D2E823] px-5 py-5 text-center">
+              <div className="flex justify-center gap-0.5" aria-label="5 star rating">
                 {[0, 1, 2, 3, 4].map((i) => (
-                  <Star key={i} className="h-6 w-6 fill-[#D2E823] text-[#D2E823]" />
+                  <Star key={i} className="h-5 w-5 fill-black text-black" />
                 ))}
               </div>
-              <div className="mt-5">
-                <PillButton
-                  href={googleReviewUrl}
-                  variant="dark"
-                  onClick={() => track("google_review_click")}
-                  ariaLabel="Rate us on Google"
-                >
-                  <Star className="h-5 w-5" /> Rate Us on Google
-                </PillButton>
-              </div>
-            </Card>
+              <p className="mt-2 text-lg font-extrabold leading-snug tracking-[-0.01em] text-black">
+                Enjoyed Shopping With Us?
+              </p>
+              <p className="mt-1 text-[13px] leading-snug text-black/70">
+                Your feedback helps our business grow.
+              </p>
+              <a
+                href={googleReviewUrl}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => track("google_review_click")}
+                aria-label="Rate us on Google"
+                className="mt-4 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-black px-6 py-3 text-[15px] font-semibold text-white transition-[filter,transform] duration-150 hover:brightness-[1.15] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99]"
+              >
+                <Star className="h-5 w-5 fill-white text-white" /> Rate Us on Google
+              </a>
+            </div>
           </div>
         )}
 
-        {/* ── Contact pills ──────────────────────────────────────────── */}
-        <div className="mt-6 space-y-4 px-4">
+        {/* ── Social follow grid — platform identity on the icon chip ── */}
+        {(youtubeLink || instagramLink || facebookLink || whatsappUrl) && (
+          <div className="mt-3 grid grid-cols-2 gap-2.5 px-4">
+            {youtubeLink && (
+              <SocialGridButton
+                href={youtubeLink.url}
+                label="YouTube"
+                action="Subscribe"
+                chip={BRAND.youtube}
+                icon={<Youtube className="h-4 w-4" />}
+                onClick={() => track("youtube_click")}
+                ariaLabel="Subscribe on YouTube"
+              />
+            )}
+            {instagramLink && (
+              <SocialGridButton
+                href={instagramLink.url}
+                label="Instagram"
+                action="Follow"
+                chip={BRAND.instagram}
+                icon={<Instagram className="h-4 w-4" />}
+                onClick={() => track("instagram_click")}
+                ariaLabel="Follow on Instagram"
+              />
+            )}
+            {facebookLink && (
+              <SocialGridButton
+                href={facebookLink.url}
+                label="Facebook"
+                action="Follow"
+                chip={BRAND.facebook}
+                icon={<Facebook className="h-4 w-4" />}
+                onClick={() => track("facebook_click")}
+                ariaLabel="Follow on Facebook"
+              />
+            )}
+            {whatsappUrl && (
+              <SocialGridButton
+                href={whatsappUrl}
+                label="WhatsApp"
+                action="Connect"
+                chip={BRAND.whatsapp}
+                icon={<MessageCircle className="h-4 w-4" />}
+                onClick={() => track("whatsapp_click")}
+                ariaLabel="Connect on WhatsApp"
+              />
+            )}
+          </div>
+        )}
+
+        {/* ── Quick actions: Save Contact / Install App / Call / Email ── */}
+        <div className="mt-2.5 grid grid-cols-2 gap-2.5 px-4">
+          <PillButton
+            href={`/api/vcard/${business.slug}`}
+            variant="dark"
+            size="compact"
+            className={quickCount === 1 ? "col-span-2" : ""}
+            download
+            onClick={() => track("save_contact_click")}
+            ariaLabel="Save contact"
+          >
+            <Download className="h-4 w-4" /> Save Contact
+          </PillButton>
+          {installAction}
           {business.phone && (
-            <PillButton href={`tel:${business.phone}`} variant="primary" onClick={() => track("call_click")} ariaLabel={`Call ${business.businessName}`}>
-              <Phone className="h-5 w-5" /> Call
+            <PillButton
+              href={`tel:${business.phone}`}
+              size="compact"
+              onClick={() => track("call_click")}
+              ariaLabel={`Call ${business.businessName}`}
+            >
+              <Phone className="h-4 w-4" /> Call
             </PillButton>
           )}
-          <PillButton href={`/api/vcard/${business.slug}`} variant="dark" download onClick={() => track("save_contact_click")} ariaLabel="Save contact">
-            <Download className="h-5 w-5" /> Save Contact
-          </PillButton>
           {business.email && (
-            <PillButton href={`mailto:${business.email}`} onClick={() => track("email_click")} ariaLabel={`Email ${business.businessName}`}>
-              <Mail className="h-5 w-5" /> Email
+            <PillButton
+              href={`mailto:${business.email}`}
+              size="compact"
+              onClick={() => track("email_click")}
+              ariaLabel={`Email ${business.businessName}`}
+            >
+              <Mail className="h-4 w-4" /> Email
             </PillButton>
           )}
         </div>
 
+        {/* ── Website / Maps ─────────────────────────────────────────── */}
+        {(websiteUrl || business.googleMapsUrl) && (
+          <div className="mt-2.5 grid grid-cols-2 gap-2.5 px-4">
+            {websiteUrl && (
+              <PillButton
+                href={websiteUrl}
+                size="compact"
+                className={!business.googleMapsUrl ? "col-span-2" : ""}
+                onClick={() => track("website_click")}
+                ariaLabel="Visit website"
+              >
+                <Globe className="h-4 w-4" /> Website
+              </PillButton>
+            )}
+            {business.googleMapsUrl && (
+              <PillButton
+                href={business.googleMapsUrl}
+                size="compact"
+                className={!websiteUrl ? "col-span-2" : ""}
+                onClick={() => track("maps_click")}
+                ariaLabel="Open in Google Maps"
+              >
+                <MapPin className="h-4 w-4" /> Maps
+              </PillButton>
+            )}
+          </div>
+        )}
+
         {/* ── Other socials — circular 2.5rem ink containers ───────────── */}
         {otherSocials.length > 0 && (
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 px-4">
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-2.5 px-4">
             {otherSocials.map((link, idx) => (
               <a
                 key={idx}
@@ -558,33 +705,17 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           </div>
         )}
 
-        {/* ── Links (Linktree link stack) ────────────────────────────── */}
-        {(websiteUrl || business.googleMapsUrl) && (
-          <div className="mt-6 space-y-4 px-4">
-            {websiteUrl && (
-              <PillButton href={websiteUrl} onClick={() => track("website_click")} ariaLabel="Visit website">
-                <Globe className="h-5 w-5" /> Website
-              </PillButton>
-            )}
-            {business.googleMapsUrl && (
-              <PillButton href={business.googleMapsUrl} onClick={() => track("maps_click")} ariaLabel="Open in Google Maps">
-                <MapPin className="h-5 w-5" /> View on Google Maps
-              </PillButton>
-            )}
-          </div>
-        )}
-
-        {/* ── Address / location — hours, closing day, phone ─────────── */}
+        {/* ── Visit Us — address, hours, closing day, phone ──────────── */}
         {business.address && (
-          <div className="mt-6 px-4">
+          <div className="mt-3 px-4">
             <Card>
-              <h2 className="text-center text-[28px] font-medium leading-[1.3] tracking-[-0.01em]">Visit Us</h2>
-              <p className="mt-3 flex items-start gap-2 text-base leading-[1.5] text-[#676B5F]">
-                <MapPin className="mt-1 h-5 w-5 shrink-0 text-black" />
+              <SectionHeading>Visit Us</SectionHeading>
+              <p className="mt-2.5 flex items-start gap-2 text-sm leading-[1.5] text-[#676B5F]">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-black" />
                 {business.address}
               </p>
               {(business.businessHours || business.closingDay || business.phone) && (
-                <dl className="mt-5 space-y-3 border-t border-black/5 pt-5 text-sm">
+                <dl className="mt-4 space-y-2.5 border-t border-black/5 pt-4 text-sm">
                   {business.businessHours && (
                     <div className="flex items-center justify-between gap-4">
                       <dt className="text-[#676B5F]">Opening Hours</dt>
@@ -609,30 +740,17 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                   )}
                 </dl>
               )}
-              {business.googleMapsUrl && (
-                <div className="mt-5">
-                  <PillButton href={business.googleMapsUrl} variant="primary" onClick={() => track("maps_click")} ariaLabel="Get directions on Google Maps">
-                    <MapPin className="h-5 w-5" /> Get Directions
-                  </PillButton>
-                </div>
-              )}
             </Card>
           </div>
         )}
 
-        {/* ── About ──────────────────────────────────────────────────── */}
-        {business.about && (
-          <div className="mt-6 px-4">
-            <Card id="t6-about">
-              <SectionHeading>About Us</SectionHeading>
-              <p className="mt-4 whitespace-pre-line text-base leading-[1.5] tracking-[0.01em] text-[#1E2330]">
-                {business.about}
-              </p>
-              <dl className="mt-6 space-y-3 border-t border-black/5 pt-5 text-sm">
-                <div className="flex items-center justify-between gap-4">
-                  <dt className="text-[#676B5F]">Company Name</dt>
-                  <dd className="text-right font-semibold">{business.businessName}</dd>
-                </div>
+        {/* ── Business details — facts only (the description lives in the
+            header, clamped to 2 lines; it is not repeated here) ─────── */}
+        {(business.category || business.yearEstd) && (
+          <div className="mt-3 px-4">
+            <Card>
+              <SectionHeading>Business Details</SectionHeading>
+              <dl className="mt-3 space-y-2.5 text-sm">
                 {business.category && (
                   <div className="flex items-center justify-between gap-4">
                     <dt className="text-[#676B5F]">Nature of Business</dt>
@@ -652,15 +770,15 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
 
         {/* ── Services ───────────────────────────────────────────────── */}
         {servicesData.length > 0 && (
-          <div id="t6-services" className="mt-10 scroll-mt-20 px-4">
+          <div className="mt-5 px-4">
             <SectionHeading>Services &amp; Products</SectionHeading>
-            <div className="mt-6 space-y-4">
+            <div className="mt-3 space-y-2.5">
               {(servicesData as Theme6Service[]).map((svc: Theme6Service, idx: number) => {
                 const title = svc.title ?? svc.name ?? "Service";
                 const rawP = (svc.price || "").trim();
                 const displayP = /^\d+$/.test(rawP) ? `₹${Number(rawP).toLocaleString("en-IN")}` : rawP;
                 return (
-                  <article key={idx} className="overflow-hidden rounded-[2rem] border border-black/5 bg-white">
+                  <article key={idx} className="overflow-hidden rounded-[1.75rem] border border-black/5 bg-white">
                     {svc.image && (
                       <button
                         type="button"
@@ -678,9 +796,9 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                         />
                       </button>
                     )}
-                    <div className="p-6">
+                    <div className="p-4">
                       <div className="flex items-start justify-between gap-3">
-                        <h3 className="text-lg font-bold leading-snug">{title}</h3>
+                        <h3 className="text-base font-bold leading-snug">{title}</h3>
                         {svc.price && (
                           <span className="shrink-0 rounded-full bg-[#E9C0E9] px-3 py-1 text-xs font-bold">
                             {displayP} onwards
@@ -688,12 +806,13 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                         )}
                       </div>
                       {svc.description && (
-                        <p className="mt-2 line-clamp-3 text-base leading-[1.5] text-[#676B5F]">{svc.description}</p>
+                        <p className="mt-1.5 line-clamp-2 text-sm leading-[1.5] text-[#676B5F]">{svc.description}</p>
                       )}
-                      <div className="mt-5">
+                      <div className="mt-3.5">
                         <PillButton
                           href={`https://wa.me/${business.whatsapp?.replace(/\D/g, "")}?text=Hi, I would like to enquire about: *${encodeURIComponent(title)}*`}
                           variant="primary"
+                          size="compact"
                           onClick={() => track("whatsapp_click")}
                           ariaLabel={`Enquire about ${title}`}
                         >
@@ -708,13 +827,13 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           </div>
         )}
 
-        {/* ── Gallery — horizontal snap scroll (DESIGN.md) ───────────── */}
+        {/* ── Gallery — horizontal snap scroll ───────────────────────── */}
         {galleryData.length > 0 && (
-          <div id="t6-gallery" className="mt-10 scroll-mt-20">
+          <div className="mt-5">
             <div className="px-4">
               <SectionHeading>Gallery</SectionHeading>
             </div>
-            <div className="mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="mt-3 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {(galleryData as (string | { url?: string })[]).map((item: string | { url?: string }, idx: number) => {
                 const imageUrl = typeof item === "string" ? item : item?.url || "";
                 if (!imageUrl) return null;
@@ -723,7 +842,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                     key={idx}
                     type="button"
                     onClick={() => setSelectedImage(imageUrl)}
-                    className="relative h-40 w-40 shrink-0 snap-start overflow-hidden rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
+                    className="relative h-36 w-36 shrink-0 snap-start overflow-hidden rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
                     aria-label={`Gallery image ${idx + 1}`}
                   >
                     <Image
@@ -731,7 +850,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                       alt={`Gallery ${idx + 1}`}
                       fill
                       loading="lazy"
-                      sizes="160px"
+                      sizes="144px"
                       className="object-cover"
                     />
                   </button>
@@ -743,15 +862,15 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
 
         {/* ── Videos — link out to the channel (no embeds, no API key) ─── */}
         {youtubeLink && (
-          <div className="mt-6 px-4">
+          <div className="mt-3 px-4">
             <Card>
               <SectionHeading>Videos</SectionHeading>
-              <p className="mt-2 text-center text-base leading-[1.5] text-[#676B5F]">
+              <p className="mt-2 text-sm leading-[1.5] text-[#676B5F]">
                 Watch our latest videos on YouTube.
               </p>
-              <div className="mt-5">
-                <PillButton href={youtubeLink.url} onClick={() => track("youtube_click")} ariaLabel="Watch videos on YouTube">
-                  <Youtube className="h-5 w-5" /> Watch on YouTube
+              <div className="mt-3.5">
+                <PillButton href={youtubeLink.url} size="compact" onClick={() => track("youtube_click")} ariaLabel="Watch videos on YouTube">
+                  <Youtube className="h-4 w-4" /> Watch on YouTube
                 </PillButton>
               </div>
             </Card>
@@ -760,17 +879,17 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
 
         {/* ── Google Reviews widget (only when configured) ───────────── */}
         {business.googleReviewWidget && (
-          <div className="mt-6 px-4">
+          <div className="mt-3 px-4">
             <Card>
               <SectionHeading>Customer Reviews</SectionHeading>
-              <div ref={reviewRef} className="mt-4 w-full" style={{ minHeight: 100 }} />
+              <div ref={reviewRef} className="mt-3 w-full" style={{ minHeight: 100 }} />
             </Card>
           </div>
         )}
 
         {/* ── Enquiry — inputs 0.5rem radius, pill lime button ───────── */}
-        <div className="mt-6 px-4">
-          <Card id="t6-enquiry">
+        <div className="mt-3 px-4">
+          <Card>
             <SectionHeading>Send an Enquiry</SectionHeading>
             <form
               onSubmit={(e) => {
@@ -790,7 +909,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                   window.location.href = `mailto:${business.email}?subject=${encodeURIComponent(`Enquiry from ${name}`)}&body=${encodeURIComponent(`${msg}\n\nPhone: ${phone}`)}`;
                 }
               }}
-              className="mt-5 space-y-3"
+              className="mt-3.5 space-y-2.5"
             >
               <input
                 name="t6name"
@@ -814,7 +933,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
               />
               <button
                 type="submit"
-                className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-full bg-[#D2E823] px-6 py-4 text-base font-medium text-black transition-[filter] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99]"
+                className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#D2E823] px-6 py-3 text-[15px] font-semibold text-black transition-[filter] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99]"
               >
                 Send via WhatsApp <Send className="h-4 w-4" />
               </button>
@@ -823,21 +942,21 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
         </div>
 
         {/* ── Share card / QR (QR lib loads lazily, see above) ────────── */}
-        <div className="mt-6 px-4" ref={shareRef}>
+        <div className="mt-3 px-4" ref={shareRef}>
           <Card>
             <SectionHeading>Share Card</SectionHeading>
-            <div className="mt-5 flex flex-col items-center gap-5">
+            <div className="mt-3.5 flex flex-col items-center gap-4">
               {qrCodeUrl ? (
                 <div className="rounded-2xl border border-black/5 bg-white p-3 shadow-sm">
-                  <Image src={qrCodeUrl} alt="QR Code" width={180} height={180} className="rounded-lg" />
+                  <Image src={qrCodeUrl} alt="QR Code" width={160} height={160} className="rounded-lg" />
                 </div>
               ) : (
-                <div className="h-[180px] w-[180px] animate-pulse rounded-2xl bg-[#EFF0EC]" />
+                <div className="h-[160px] w-[160px] animate-pulse rounded-2xl bg-[#EFF0EC]" />
               )}
-              <div className="flex w-full gap-3">
+              <div className="flex w-full gap-2.5">
                 <button
                   onClick={copyLink}
-                  className="flex min-h-[56px] flex-1 items-center justify-center gap-2 rounded-full border border-black bg-white px-4 py-3 text-base font-medium transition-[filter] duration-150 hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99]"
+                  className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-full border border-black bg-white px-4 py-3 text-sm font-semibold transition-[filter] duration-150 hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99]"
                 >
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   {copied ? "Copied!" : "Copy Link"}
@@ -847,7 +966,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                   target="_blank"
                   rel="noreferrer"
                   onClick={() => track("share_click")}
-                  className="flex min-h-[56px] flex-1 items-center justify-center gap-2 rounded-full bg-[#D2E823] px-4 py-3 text-base font-medium text-black transition-[filter] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99]"
+                  className="flex min-h-[52px] flex-1 items-center justify-center gap-2 rounded-full bg-[#D2E823] px-4 py-3 text-sm font-semibold text-black transition-[filter] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99]"
                 >
                   <Share2 className="h-4 w-4" /> Share
                 </a>
@@ -856,31 +975,13 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           </Card>
         </div>
 
-        {/* ── Install as app — prompt, or iOS instructions, or hidden ────
-            Android/Chrome: native install prompt (lime pill). iPhone: iOS
-            has no install prompt, so show Share → Add to Home Screen
-            steps. Already installed: show nothing. */}
-        {!pwaInstalled && pwaPrompt && (
-          <div className="mt-6 px-4">
-            <button
-              onClick={async () => {
-                pwaPrompt.prompt();
-                const choice = await pwaPrompt.userChoice;
-                if (choice.outcome === "accepted") track("pwa_install");
-                setPwaPrompt(null);
-              }}
-              className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-full bg-[#D2E823] px-6 py-4 text-base font-medium text-black transition-[filter] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99]"
-            >
-              <Download className="h-5 w-5" /> Install App
-            </button>
-            <p className="mt-2 text-center text-xs text-[#676B5F]">Install this card as an app for easy access anytime.</p>
-          </div>
-        )}
+        {/* ── Install on iPhone — Share → Add to Home Screen steps ──────
+            (Android install lives in the first-screen quick actions.) */}
         {!pwaInstalled && !pwaPrompt && isIOS && (
-          <div className="mt-6 px-4">
+          <div id="t6-install" className="mt-3 scroll-mt-20 px-4">
             <Card>
               <SectionHeading>Install App</SectionHeading>
-              <ol className="mt-4 list-decimal space-y-2 pl-5 text-base leading-[1.5] text-[#1E2330]">
+              <ol className="mt-3 list-decimal space-y-1.5 pl-5 text-sm leading-[1.5] text-[#1E2330]">
                 <li>Tap the <strong>Share</strong> button in your browser (square with an arrow).</li>
                 <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
                 <li>Tap <strong>Add</strong> — the card appears on your home screen like an app.</li>
@@ -889,39 +990,24 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           </div>
         )}
 
-        {/* ── Footer — purple conversion stage, lime CTA ─────────────── */}
-        <footer className="mt-10 px-4 pb-2" style={{ background: T.purple }}>
-          <div className="mx-auto max-w-[398px] py-10 text-center">
-            <p className="text-xs font-medium uppercase tracking-[0.2em] text-white/70">
+        {/* ── Footer — compact purple strip ──────────────────────────── */}
+        <footer className="mt-5 px-4 pb-4" style={{ background: T.purple }}>
+          <div className="mx-auto max-w-[398px] py-6 text-center">
+            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-white/70">
               Create your own digital card
             </p>
             <Link
               href="/"
-              className="mt-5 inline-flex min-h-[56px] items-center justify-center rounded-full bg-[#D2E823] px-8 py-4 text-base font-medium text-black transition-[filter] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:scale-[0.99]"
+              className="mt-4 inline-flex min-h-[52px] items-center justify-center rounded-full bg-[#D2E823] px-7 py-3 text-[15px] font-semibold text-black transition-[filter] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white active:scale-[0.99]"
             >
               Get Started Now
             </Link>
-            <div className="mt-8 flex flex-col items-center gap-1 opacity-70">
+            <div className="mt-5 flex flex-col items-center gap-0.5 opacity-70">
               <span className="text-[10px] font-medium uppercase tracking-widest text-white">Powered by</span>
               <span className="text-sm font-extrabold tracking-tight text-white">EVisitingCard</span>
             </div>
           </div>
         </footer>
-
-        {/* ── Bottom nav ─────────────────────────────────────────────── */}
-        <nav className="fixed bottom-0 left-1/2 z-50 flex h-[60px] w-full max-w-[430px] -translate-x-1/2 items-center justify-around border-t border-black/10 bg-white pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.15)]">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => scrollTo(item.id)}
-              className="flex h-full w-16 flex-col items-center justify-center text-black transition-opacity active:opacity-70"
-              aria-label={item.label}
-            >
-              {item.icon}
-              <span className="mt-0.5 text-[10px] font-medium">{item.label}</span>
-            </button>
-          ))}
-        </nav>
 
         {/* ── Lightbox ───────────────────────────────────────────────── */}
         {selectedImage && (
