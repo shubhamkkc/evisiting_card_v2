@@ -1,5 +1,11 @@
 [build]
-  command = "npm run build"
+  # Sync the production database schema before building. The Theme 6 v2
+  # deploy (businessHours/closingDay columns + BusinessEvent table) went
+  # live while the prod DB still had the old schema, so every business
+  # card page returned 500 (Prisma P2022: column does not exist) until
+  # the schema is pushed. db push is additive-only here and fails
+  # instead of dropping data, matching this repo's no-migrations workflow.
+  command = "npx prisma db push && npm run build"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
