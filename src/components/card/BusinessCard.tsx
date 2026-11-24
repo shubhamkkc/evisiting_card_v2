@@ -16,12 +16,14 @@ import BottomNavBar from "./BottomNavBar";
 import InstallPWA from "./InstallPWA";
 import Link from "next/link";
 
-import Theme4Card from "./Theme4Card";
-import Theme5Card from "./Theme5Card";
 import dynamic from "next/dynamic";
 
-// Theme 6 is code-split: its chunk (and the QR library it lazy-loads) is only
-// downloaded when a business actually uses theme6.
+// Themes 4/5/6 are code-split: each theme's chunk is only downloaded when a
+// business actually uses that theme, so a Theme 6 page never downloads the
+// Theme 4/5 code (and vice versa). dynamic() keeps SSR on (default), so the
+// server-rendered HTML is unchanged — only the client JS is split.
+const Theme4Card = dynamic(() => import("./Theme4Card"));
+const Theme5Card = dynamic(() => import("./Theme5Card"));
 const Theme6Card = dynamic(() => import("./Theme6Card"));
 
 // Adjust according to the Prisma schema TS definitions

@@ -21,6 +21,8 @@ model Business {
   googleMapsUrl String?
   googlePlaceId      String?
   googleReviewWidget String?
+  businessHours String?
+  closingDay    String?
   logo               String?
   coverPhoto    String?
   about         String?
@@ -38,4 +40,19 @@ model Business {
   cardViews     Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  events        BusinessEvent[]
+}
+
+// Privacy-friendly click analytics for Theme 6 engagement tracking.
+// Stores only the business + event type + timestamp — no IP, no user agent,
+// no personal data. Written via POST /api/track (sendBeacon).
+model BusinessEvent {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  type       String
+  createdAt  DateTime @default(now())
+
+  @@index([businessId, type])
+  @@index([businessId, createdAt])
 }

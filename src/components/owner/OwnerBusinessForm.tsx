@@ -278,9 +278,18 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
               <label style={labelStyle}>Google Maps URL</label>
               <input type="url" style={inputStyle} value={formData.googleMapsUrl || ""} onChange={e => setFormData({ ...formData, googleMapsUrl: e.target.value })} placeholder="https://maps.google.com/..." />
             </div>
+            <div>
+              <label style={labelStyle}>Opening Hours</label>
+              <input type="text" style={inputStyle} value={formData.businessHours || ""} onChange={e => setFormData({ ...formData, businessHours: e.target.value })} placeholder="e.g. Mon–Sat: 10 AM – 9 PM" />
+            </div>
+            <div>
+              <label style={labelStyle}>Weekly Closing Day</label>
+              <input type="text" style={inputStyle} value={formData.closingDay || ""} onChange={e => setFormData({ ...formData, closingDay: e.target.value })} placeholder="e.g. Sunday" />
+            </div>
             <div style={{ gridColumn: "1 / -1" }}>
               <label style={labelStyle}>Google Review Widget Code (e.g. Elfsight)</label>
               <textarea rows={3} style={{ ...inputStyle, resize: "vertical", fontFamily: "monospace", fontSize: "12px" }} value={formData.googleReviewWidget || ""} onChange={e => setFormData({ ...formData, googleReviewWidget: e.target.value })} placeholder="Paste your 3rd-party widget iframe/script here..." />
+              <p style={{ margin: "4px 0 0", fontSize: 12, color: "#64748b" }}>Tip: to show the “Rate Us on Google” button on Theme 6, add a Social Link with platform “Google Review” and your review URL below.</p>
             </div>
           </div>
         </section>

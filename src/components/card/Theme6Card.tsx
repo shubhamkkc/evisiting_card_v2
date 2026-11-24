@@ -14,7 +14,7 @@
 // The QR library is dynamic-imported only when the Share section scrolls into
 // view. Below-the-fold images are lazy; only the logo/cover are prioritised.
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -76,6 +76,7 @@ function PillButton({
     return (
       <a
         href={href}
+        onClick={onClick}
         {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
         {...(download ? { download: true } : {})}
         aria-label={ariaLabel}
@@ -124,7 +125,10 @@ interface Theme6Business {
   website?: string | null;
   address?: string | null;
   googleMapsUrl?: string | null;
+  googlePlaceId?: string | null;
   googleReviewWidget?: string | null;
+  businessHours?: string | null;
+  closingDay?: string | null;
   logo?: string | null;
   coverPhoto?: string | null;
   about?: string | null;
@@ -181,6 +185,52 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           .map(([platform, url]) => ({ platform, url: url as string }))
       : [];
 
+  // ── QR engagement: priority socials, review link, WhatsApp ──────────────
+  // Priority follow buttons (full pills, first screen): YouTube, Instagram,
+  // Facebook, WhatsApp. Everything else stays as small icon circles.
+  const findSocial = (...keys: string[]) =>
+    socialLinks.find((l) => keys.includes(l.platform.toLowerCase()));
+  const youtubeLink = findSocial("youtube");
+  const instagramLink = findSocial("instagram");
+  const facebookLink = findSocial("facebook");
+  const whatsappSocial = findSocial("whatsapp");
+  const reviewLink = findSocial("googlereview", "google", "review");
+  const priorityKeys = new Set(["youtube", "instagram", "facebook", "whatsapp"]);
+  // The review link has its own prominent section — don't duplicate it here.
+  const iconExcludes = new Set([...priorityKeys, "googlereview", "google", "review"]);
+  const otherSocials = socialLinks.filter((l) => !iconExcludes.has(l.platform.toLowerCase()));
+
+  const waNumber = (business.whatsapp || "").replace(/\D/g, "");
+  const whatsappUrl = waNumber
+    ? `https://wa.me/${waNumber}?text=Hello%20${encodeURIComponent(business.businessName)}`
+    : whatsappSocial?.url ?? null;
+
+  // Google Review URL: configured link first, else derive it from the
+  // Google Place ID (search.google.com/local/writereview?placeid=...).
+  const googleReviewUrl =
+    reviewLink?.url ??
+    (business.googlePlaceId
+      ? `https://search.google.com/local/writereview?placeid=${business.googlePlaceId}`
+      : null);
+
+  // ── Privacy-friendly click analytics (POST /api/track, sendBeacon) ──────
+  // No personal data — only the page slug + event type.
+  const track = useCallback((type: string) => {
+    try {
+      const payload = JSON.stringify({ slug: business.slug, type });
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon("/api/track", new Blob([payload], { type: "application/json" }));
+      } else {
+        fetch("/api/track", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: payload,
+          keepalive: true,
+        }).catch(() => {});
+      }
+    } catch {}
+  }, [business.slug]);
+
   const cardHref = typeof window !== "undefined" ? `${window.location.origin}/${business.slug}` : `/${business.slug}`;
 
   // QR code: lazy — only generated when the Share section scrolls into view,
@@ -231,15 +281,48 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
     reviewRef.current.appendChild(fragment);
   }, [business.googleReviewWidget]);
 
-  // PWA install prompt — only renders a button when the browser offers one.
+  // PWA: register the service worker (Theme 6 renders without the shared
+  // InstallPWA component, so it registers here), capture the install
+  // prompt, and detect installed / iOS states for the install section.
+  const [pwaInstalled, setPwaInstalled] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
   useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      // Register now if the page already loaded (React hydrates after
+      // `load` on fast connections, so a load-only listener would never fire).
+      const registerSW = () => {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+      };
+      if (document.readyState === "complete") {
+        registerSW();
+      } else {
+        window.addEventListener("load", registerSW);
+      }
+    }
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+    setPwaInstalled(standalone);
+    setIsIOS(
+      /iPad|iPhone|iPod/.test(window.navigator.userAgent) &&
+        !(window as unknown as { MSStream?: unknown }).MSStream
+    );
     const handler = (e: Event) => {
       e.preventDefault();
       setPwaPrompt(e as BeforeInstallPromptEvent);
     };
+    const onInstalled = () => {
+      setPwaInstalled(true);
+      setPwaPrompt(null);
+      track("pwa_install");
+    };
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, [track]);
 
   const copyLink = async () => {
     try {
@@ -368,6 +451,15 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
               {business.category}
             </span>
           )}
+          <p className="mt-3 text-sm font-medium text-[#676B5F]">
+            Welcome! Stay connected with us.
+          </p>
+          {business.address && (
+            <p className="mt-1 flex items-center justify-center gap-1.5 text-sm text-[#676B5F]">
+              <MapPin className="h-4 w-4 shrink-0" />
+              {business.address.split(",").slice(0, 2).join(",").trim()}
+            </p>
+          )}
           {business.about && (
             <p className="mx-auto mt-4 max-w-[340px] text-base font-normal leading-[1.5] tracking-[0.01em] text-[#1E2330]">
               {business.about}
@@ -375,41 +467,89 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           )}
         </header>
 
+        {/* ── Social follow pills — first screen, QR engagement ────────── */}
+        {(youtubeLink || instagramLink || facebookLink || whatsappUrl) && (
+          <div className="mt-6 space-y-4 px-4">
+            {youtubeLink && (
+              <PillButton href={youtubeLink.url} onClick={() => track("youtube_click")} ariaLabel="Subscribe on YouTube">
+                <Youtube className="h-5 w-5" /> YouTube — Subscribe
+              </PillButton>
+            )}
+            {instagramLink && (
+              <PillButton href={instagramLink.url} onClick={() => track("instagram_click")} ariaLabel="Follow on Instagram">
+                <Instagram className="h-5 w-5" /> Instagram — Follow
+              </PillButton>
+            )}
+            {facebookLink && (
+              <PillButton href={facebookLink.url} onClick={() => track("facebook_click")} ariaLabel="Follow on Facebook">
+                <Facebook className="h-5 w-5" /> Facebook — Follow
+              </PillButton>
+            )}
+            {whatsappUrl && (
+              <PillButton href={whatsappUrl} onClick={() => track("whatsapp_click")} ariaLabel="Connect on WhatsApp">
+                <MessageCircle className="h-5 w-5" /> WhatsApp — Connect
+              </PillButton>
+            )}
+          </div>
+        )}
+
+        {/* ── Google Review — prominent, right under the social buttons ── */}
+        {googleReviewUrl && (
+          <div className="mt-6 px-4">
+            <Card>
+              <h2 className="text-center text-[28px] font-medium leading-[1.3] tracking-[-0.01em]">
+                Enjoyed Shopping With Us?
+              </h2>
+              <p className="mt-2 text-center text-base leading-[1.5] text-[#676B5F]">
+                Your feedback helps our business grow. Share your genuine experience with us.
+              </p>
+              <div className="mt-5 flex justify-center gap-1" aria-label="5 star rating">
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <Star key={i} className="h-6 w-6 fill-[#D2E823] text-[#D2E823]" />
+                ))}
+              </div>
+              <div className="mt-5">
+                <PillButton
+                  href={googleReviewUrl}
+                  variant="dark"
+                  onClick={() => track("google_review_click")}
+                  ariaLabel="Rate us on Google"
+                >
+                  <Star className="h-5 w-5" /> Rate Us on Google
+                </PillButton>
+              </div>
+            </Card>
+          </div>
+        )}
+
         {/* ── Contact pills ──────────────────────────────────────────── */}
         <div className="mt-6 space-y-4 px-4">
           {business.phone && (
-            <PillButton href={`tel:${business.phone}`} variant="primary" ariaLabel={`Call ${business.businessName}`}>
+            <PillButton href={`tel:${business.phone}`} variant="primary" onClick={() => track("call_click")} ariaLabel={`Call ${business.businessName}`}>
               <Phone className="h-5 w-5" /> Call
             </PillButton>
           )}
-          {business.whatsapp && (
-            <PillButton
-              href={`https://wa.me/${business.whatsapp.replace(/\D/g, "")}?text=Hello%20${encodeURIComponent(business.businessName)}`}
-              ariaLabel="Chat on WhatsApp"
-            >
-              <MessageCircle className="h-5 w-5" /> WhatsApp
-            </PillButton>
-          )}
+          <PillButton href={`/api/vcard/${business.slug}`} variant="dark" download onClick={() => track("save_contact_click")} ariaLabel="Save contact">
+            <Download className="h-5 w-5" /> Save Contact
+          </PillButton>
           {business.email && (
-            <PillButton href={`mailto:${business.email}`} ariaLabel={`Email ${business.businessName}`}>
+            <PillButton href={`mailto:${business.email}`} onClick={() => track("email_click")} ariaLabel={`Email ${business.businessName}`}>
               <Mail className="h-5 w-5" /> Email
             </PillButton>
           )}
-          <PillButton href={`/api/vcard/${business.slug}`} variant="dark" download ariaLabel="Save contact">
-            <Download className="h-5 w-5" /> Save Contact
-          </PillButton>
         </div>
 
-        {/* ── Social icons — circular 2.5rem ink containers ─────────── */}
-        {socialLinks.length > 0 && (
+        {/* ── Other socials — circular 2.5rem ink containers ───────────── */}
+        {otherSocials.length > 0 && (
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3 px-4">
-            {socialLinks.map((link, idx) => (
+            {otherSocials.map((link, idx) => (
               <a
                 key={idx}
                 href={link.url}
                 target="_blank"
                 rel="noreferrer"
                 aria-label={link.platform}
+                onClick={() => track(`${link.platform.toLowerCase()}_click`)}
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-black text-white transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-95"
               >
                 {getSocialIcon(link.platform)}
@@ -422,19 +562,19 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
         {(websiteUrl || business.googleMapsUrl) && (
           <div className="mt-6 space-y-4 px-4">
             {websiteUrl && (
-              <PillButton href={websiteUrl} ariaLabel="Visit website">
+              <PillButton href={websiteUrl} onClick={() => track("website_click")} ariaLabel="Visit website">
                 <Globe className="h-5 w-5" /> Website
               </PillButton>
             )}
             {business.googleMapsUrl && (
-              <PillButton href={business.googleMapsUrl} ariaLabel="Open in Google Maps">
+              <PillButton href={business.googleMapsUrl} onClick={() => track("maps_click")} ariaLabel="Open in Google Maps">
                 <MapPin className="h-5 w-5" /> View on Google Maps
               </PillButton>
             )}
           </div>
         )}
 
-        {/* ── Address ────────────────────────────────────────────────── */}
+        {/* ── Address / location — hours, closing day, phone ─────────── */}
         {business.address && (
           <div className="mt-6 px-4">
             <Card>
@@ -443,9 +583,35 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                 <MapPin className="mt-1 h-5 w-5 shrink-0 text-black" />
                 {business.address}
               </p>
+              {(business.businessHours || business.closingDay || business.phone) && (
+                <dl className="mt-5 space-y-3 border-t border-black/5 pt-5 text-sm">
+                  {business.businessHours && (
+                    <div className="flex items-center justify-between gap-4">
+                      <dt className="text-[#676B5F]">Opening Hours</dt>
+                      <dd className="text-right font-semibold">{business.businessHours}</dd>
+                    </div>
+                  )}
+                  {business.closingDay && (
+                    <div className="flex items-center justify-between gap-4">
+                      <dt className="text-[#676B5F]">Weekly Closing Day</dt>
+                      <dd className="text-right font-semibold">{business.closingDay}</dd>
+                    </div>
+                  )}
+                  {business.phone && (
+                    <div className="flex items-center justify-between gap-4">
+                      <dt className="text-[#676B5F]">Phone</dt>
+                      <dd className="text-right font-semibold">
+                        <a href={`tel:${business.phone}`} onClick={() => track("call_click")} className="underline-offset-2 hover:underline">
+                          {business.phone}
+                        </a>
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              )}
               {business.googleMapsUrl && (
                 <div className="mt-5">
-                  <PillButton href={business.googleMapsUrl} variant="primary" ariaLabel="Get directions on Google Maps">
+                  <PillButton href={business.googleMapsUrl} variant="primary" onClick={() => track("maps_click")} ariaLabel="Get directions on Google Maps">
                     <MapPin className="h-5 w-5" /> Get Directions
                   </PillButton>
                 </div>
@@ -528,6 +694,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                         <PillButton
                           href={`https://wa.me/${business.whatsapp?.replace(/\D/g, "")}?text=Hi, I would like to enquire about: *${encodeURIComponent(title)}*`}
                           variant="primary"
+                          onClick={() => track("whatsapp_click")}
                           ariaLabel={`Enquire about ${title}`}
                         >
                           Enquiry
@@ -574,6 +741,23 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           </div>
         )}
 
+        {/* ── Videos — link out to the channel (no embeds, no API key) ─── */}
+        {youtubeLink && (
+          <div className="mt-6 px-4">
+            <Card>
+              <SectionHeading>Videos</SectionHeading>
+              <p className="mt-2 text-center text-base leading-[1.5] text-[#676B5F]">
+                Watch our latest videos on YouTube.
+              </p>
+              <div className="mt-5">
+                <PillButton href={youtubeLink.url} onClick={() => track("youtube_click")} ariaLabel="Watch videos on YouTube">
+                  <Youtube className="h-5 w-5" /> Watch on YouTube
+                </PillButton>
+              </div>
+            </Card>
+          </div>
+        )}
+
         {/* ── Google Reviews widget (only when configured) ───────────── */}
         {business.googleReviewWidget && (
           <div className="mt-6 px-4">
@@ -591,6 +775,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                track("enquiry_click");
                 const form = e.target as HTMLFormElement;
                 const name = (form.elements.namedItem("t6name") as HTMLInputElement)?.value || "";
                 const phone = (form.elements.namedItem("t6phone") as HTMLInputElement)?.value || "";
@@ -661,6 +846,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                   href={`https://wa.me/?text=${encodeURIComponent(`Check out my Digital Business Card: ${cardUrl}`)}`}
                   target="_blank"
                   rel="noreferrer"
+                  onClick={() => track("share_click")}
                   className="flex min-h-[56px] flex-1 items-center justify-center gap-2 rounded-full bg-[#D2E823] px-4 py-3 text-base font-medium text-black transition-[filter] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99]"
                 >
                   <Share2 className="h-4 w-4" /> Share
@@ -670,20 +856,36 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           </Card>
         </div>
 
-        {/* ── Install as app (only when the browser offers it) ────────── */}
-        {pwaPrompt && (
+        {/* ── Install as app — prompt, or iOS instructions, or hidden ────
+            Android/Chrome: native install prompt (lime pill). iPhone: iOS
+            has no install prompt, so show Share → Add to Home Screen
+            steps. Already installed: show nothing. */}
+        {!pwaInstalled && pwaPrompt && (
           <div className="mt-6 px-4">
             <button
               onClick={async () => {
                 pwaPrompt.prompt();
-                await pwaPrompt.userChoice;
+                const choice = await pwaPrompt.userChoice;
+                if (choice.outcome === "accepted") track("pwa_install");
                 setPwaPrompt(null);
               }}
-              className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-full bg-[#D2E823] px-6 py-4 text-base font-medium text-black transition-[filter] duration-150 hover:brightness-[0.96] active:scale-[0.99]"
+              className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-full bg-[#D2E823] px-6 py-4 text-base font-medium text-black transition-[filter] duration-150 hover:brightness-[0.96] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black active:scale-[0.99]"
             >
-              <Download className="h-5 w-5" /> Save as App (Install)
+              <Download className="h-5 w-5" /> Install App
             </button>
             <p className="mt-2 text-center text-xs text-[#676B5F]">Install this card as an app for easy access anytime.</p>
+          </div>
+        )}
+        {!pwaInstalled && !pwaPrompt && isIOS && (
+          <div className="mt-6 px-4">
+            <Card>
+              <SectionHeading>Install App</SectionHeading>
+              <ol className="mt-4 list-decimal space-y-2 pl-5 text-base leading-[1.5] text-[#1E2330]">
+                <li>Tap the <strong>Share</strong> button in your browser (square with an arrow).</li>
+                <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
+                <li>Tap <strong>Add</strong> — the card appears on your home screen like an app.</li>
+              </ol>
+            </Card>
           </div>
         )}
 
