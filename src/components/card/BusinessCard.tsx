@@ -18,6 +18,11 @@ import Link from "next/link";
 
 import Theme4Card from "./Theme4Card";
 import Theme5Card from "./Theme5Card";
+import dynamic from "next/dynamic";
+
+// Theme 6 is code-split: its chunk (and the QR library it lazy-loads) is only
+// downloaded when a business actually uses theme6.
+const Theme6Card = dynamic(() => import("./Theme6Card"));
 
 // Adjust according to the Prisma schema TS definitions
 interface Business {
@@ -102,6 +107,14 @@ export default function BusinessCard({ business }: { business: Business }) {
     return (
       <div className="w-full max-w-lg mx-auto">
         <Theme5Card business={business} viewCount={viewCount} />
+      </div>
+    );
+  }
+
+  if (business.theme === 'theme6') {
+    return (
+      <div className="w-full max-w-lg mx-auto">
+        <Theme6Card business={business} viewCount={viewCount} />
       </div>
     );
   }

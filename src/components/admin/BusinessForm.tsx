@@ -404,6 +404,7 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
                <option value="theme3">Gradient Modern (Theme 3)</option>
                <option value="theme4">Cinematic Dark (Theme 4)</option>
                <option value="theme5">✨ Fluid Rainbow (Theme 5)</option>
+               <option value="theme6">🔗 Linktree Style (Theme 6)</option>
              </select>
           </div>
           <div>
