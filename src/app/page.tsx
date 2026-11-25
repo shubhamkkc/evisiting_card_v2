@@ -1,4 +1,4 @@
-import { ArrowRight, QrCode, Share2, Smartphone, CheckCircle2 } from "lucide-react";
+import { ArrowRight, QrCode, Share2, Smartphone, CheckCircle2, Palette, MessageCircle, Star, BadgePercent } from "lucide-react";
 import Link from "next/link";
 import AutoScrollingIframe from "@/components/AutoScrollingIframe";
 
@@ -7,9 +7,9 @@ const jsonLd = {
   "@type": "ProfessionalService",
   "name": "GrowX Digital Card",
   "url": "https://card.growxdigitech.com",
-  "description": "Digital business card service by GrowX Digitech for businesses across India",
-  "priceRange": "₹499-₹999",
-  "areaServed": "India",
+  "description": "Digital business card service by GrowX Digitech for businesses worldwide",
+  "priceRange": "₹499/year or $9/year",
+  "areaServed": "Worldwide",
   "serviceType": "Digital Business Card",
 };
 
@@ -66,7 +66,7 @@ export default function Home() {
               Message us on WhatsApp and we will create your digital business card for you. No public self-signup, just direct support and fast setup.
             </p>
             <p className="mx-auto mb-10 max-w-2xl text-base text-white/50">
-              We create digital business cards for local businesses — electricians, photographers, CA firms, shops, and more across India.
+              We create digital business cards for local businesses — electricians, photographers, CA firms, shops, and more, worldwide.
             </p>
             <div className="flex flex-col justify-center gap-4 sm:flex-row">
               <Link
@@ -169,6 +169,37 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Why GrowX Digital Card */}
+        <section className="border-t border-gx-hairline py-24">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto mb-16 max-w-2xl text-center">
+              <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-gx-hairline bg-white/5 px-3 py-1 text-sm font-medium text-white/70">
+                <span className="flex h-2 w-2 animate-pulse rounded-full bg-gx-orange"></span>
+                Why GrowX Digital Card
+              </p>
+              <h2 className="mb-4 font-gx-display text-3xl font-bold">Not another template. A card built around your business.</h2>
+              <p className="text-lg text-white/70">Big card apps give you a form to fill. We give you a finished card — and four things they don&apos;t.</p>
+            </div>
+
+            <div className="grid gap-8 md:grid-cols-2">
+              {[
+                { icon: <Palette className="h-8 w-8 text-gx-orange" />, title: "Your logo sets the theme", desc: "Upload your logo and your card's colours are generated from it automatically. No template that looks like everyone else's — your card looks like your brand." },
+                { icon: <MessageCircle className="h-8 w-8 text-gx-lime" />, title: "WhatsApp, done for you", desc: "We set up your WhatsApp button, enquiry form and contact links for you. You don't touch a single setting — message us and it's ready in 24 hours." },
+                { icon: <Star className="h-8 w-8 text-gx-orange" />, title: "Google Review machine", desc: "Your QR code takes customers straight to your Google Review page. Every scan is a chance at another 5-star review — more reviews, more calls, no extra app." },
+                { icon: <BadgePercent className="h-8 w-8 text-gx-lime" />, title: "₹499/year. That's it.", desc: "Big apps charge $6–8 every single month. One GrowX card costs ₹499 a year in India — about $9 a year anywhere else — with everything included. No monthly bill, ever." },
+              ].map((f, i) => (
+                <div key={i} className="rounded-3xl border border-gx-hairline bg-gx-canvas p-8 shadow-sm transition-all hover:shadow-xl">
+                  <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5">
+                    {f.icon}
+                  </div>
+                  <h3 className="mb-3 font-gx-display text-xl font-bold">{f.title}</h3>
+                  <p className="text-[15px] leading-relaxed text-white/70">{f.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* How It Works */}
         <section className="border-t border-gx-hairline py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -209,6 +240,7 @@ export default function Home() {
                   <h3 className="mb-2 font-gx-display text-2xl font-bold">Standard</h3>
                   <p className="mb-6 text-white/70">Everything you need to grow your business</p>
                   <div className="mb-8 text-4xl font-black">₹499<span className="text-lg font-medium text-white/60">/year</span></div>
+                  <p className="mb-8 -mt-4 text-sm text-white/60">Outside India: <span className="font-bold text-white">$9/year</span> — same card, same features.</p>
                   <ul className="mb-8 flex-1 space-y-4">
                     {[
                       '1 Custom Digital Card Link',
@@ -238,6 +270,70 @@ export default function Home() {
                   </Link>
                </div>
             </div>
+          </div>
+        </section>
+        {/* Compare */}
+        <section className="border-t border-gx-hairline py-24">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto mb-12 max-w-2xl text-center">
+              <h2 className="mb-4 font-gx-display text-3xl font-bold">How GrowX compares</h2>
+              <p className="text-lg text-white/70">Same idea as the big apps. One flat yearly price — and the setup done for you.</p>
+            </div>
+
+            <div className="overflow-x-auto rounded-3xl border border-gx-hairline">
+              <table className="w-full min-w-[720px] border-collapse text-left text-sm sm:text-base">
+                <thead>
+                  <tr className="bg-gx-canvas text-white">
+                    <th className="px-4 py-4 font-gx-display font-bold sm:px-6">What you get</th>
+                    <th className="bg-gx-orange px-4 py-4 font-gx-display font-bold text-white sm:px-6">GrowX Digital Card</th>
+                    <th className="px-4 py-4 font-gx-display font-bold sm:px-6">Blinq</th>
+                    <th className="px-4 py-4 font-gx-display font-bold sm:px-6">HiHello</th>
+                    <th className="px-4 py-4 font-gx-display font-bold sm:px-6">Popl</th>
+                  </tr>
+                </thead>
+                <tbody className="text-white/80">
+                  <tr className="border-t border-gx-hairline">
+                    <td className="px-4 py-4 font-semibold text-white sm:px-6">Price per year</td>
+                    <td className="bg-gx-orange/10 px-4 py-4 font-bold text-white sm:px-6">₹499 / $9</td>
+                    <td className="px-4 py-4 sm:px-6">From ~$88/yr (Premium, billed yearly)</td>
+                    <td className="px-4 py-4 sm:px-6">From $72/yr (Professional, billed yearly)</td>
+                    <td className="px-4 py-4 sm:px-6">From ~$77/yr (Pro, billed yearly)</td>
+                  </tr>
+                  <tr className="border-t border-gx-hairline bg-gx-canvas/50">
+                    <td className="px-4 py-4 font-semibold text-white sm:px-6">Free tier</td>
+                    <td className="bg-gx-orange/10 px-4 py-4 sm:px-6">One simple plan — no free tier</td>
+                    <td className="px-4 py-4 sm:px-6">Yes — 2 cards</td>
+                    <td className="px-4 py-4 sm:px-6">Yes — 2–4 cards</td>
+                    <td className="px-4 py-4 sm:px-6">Yes — 1 card</td>
+                  </tr>
+                  <tr className="border-t border-gx-hairline">
+                    <td className="px-4 py-4 font-semibold text-white sm:px-6">Card colours from your logo</td>
+                    <td className="bg-gx-orange/10 px-4 py-4 font-bold text-white sm:px-6">Yes — automatic</td>
+                    <td className="px-4 py-4 sm:px-6">Manual colours (Premium)</td>
+                    <td className="px-4 py-4 sm:px-6">Custom colours &amp; fonts (Professional)</td>
+                    <td className="px-4 py-4 sm:px-6">Manual branding (Pro+)</td>
+                  </tr>
+                  <tr className="border-t border-gx-hairline bg-gx-canvas/50">
+                    <td className="px-4 py-4 font-semibold text-white sm:px-6">WhatsApp setup</td>
+                    <td className="bg-gx-orange/10 px-4 py-4 font-bold text-white sm:px-6">Done for you</td>
+                    <td className="px-4 py-4 sm:px-6">DIY — you set it up</td>
+                    <td className="px-4 py-4 sm:px-6">DIY — you set it up</td>
+                    <td className="px-4 py-4 sm:px-6">DIY — you set it up</td>
+                  </tr>
+                  <tr className="border-t border-gx-hairline">
+                    <td className="px-4 py-4 font-semibold text-white sm:px-6">Google Review QR</td>
+                    <td className="bg-gx-orange/10 px-4 py-4 font-bold text-white sm:px-6">Yes — QR goes straight to your review page</td>
+                    <td className="px-4 py-4 sm:px-6">Not listed</td>
+                    <td className="px-4 py-4 sm:px-6">Not listed</td>
+                    <td className="px-4 py-4 sm:px-6">Not listed</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <p className="mt-6 text-center text-sm text-white/50">
+              Competitor prices from their public pricing pages, checked November 2026 — they change. GrowX price is flat: ₹499/year in India, $9/year anywhere else. Indian options like QRCodeChimp and BizDuniya focus on QR codes; GrowX gives you the full card, your branding, and the setup done for you.
+            </p>
           </div>
         </section>
       </main>

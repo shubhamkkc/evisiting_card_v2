@@ -4,23 +4,23 @@ import { ArrowRight, Camera, Image, Share2, Link2 } from "lucide-react";
 import AutoScrollingIframe from "@/components/AutoScrollingIframe";
 
 export const metadata: Metadata = {
-  title: "Digital Business Card for Photographers India | GrowX Digital Card",
+  title: "Digital Business Card for Photographers | GrowX Digital Card",
   description:
-    "Digital visiting card for photographers and studios across India. Show your portfolio, gallery & contact in one link. Starting ₹499/year.",
+    "Digital visiting card for photographers and studios worldwide. Show your portfolio, gallery & contact in one link. Starting ₹499/year ($9/year).",
   keywords: [
-    "digital business card for photographers India",
+    "digital business card for photographers",
     "photographer digital visiting card",
     "photography studio card online",
     "portfolio link for photographers",
-    "digital card photographer India",
+    "digital card photographer",
   ],
   alternates: {
     canonical: "https://card.growxdigitech.com/for-photographers",
   },
   openGraph: {
-    title: "Digital Business Card for Photographers India | GrowX Digital Card",
+    title: "Digital Business Card for Photographers | GrowX Digital Card",
     description:
-      "Digital visiting card for photographers and studios across India. Show your portfolio, gallery & contact in one link. Starting ₹499/year.",
+      "Digital visiting card for photographers and studios worldwide. Show your portfolio, gallery & contact in one link. Starting ₹499/year ($9/year).",
     url: "https://card.growxdigitech.com/for-photographers",
     type: "website",
   },
@@ -88,20 +88,19 @@ export default function ForPhotographersPage() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gx-orange opacity-60"></span>
                 <span className="relative inline-flex size-2.5 rounded-full bg-gx-orange"></span>
               </span>
-              Built for photographers &amp; studios across India
+              Built for photographers &amp; studios worldwide
             </p>
 
             <h1 className="mb-6 font-gx-display text-4xl font-bold leading-tight tracking-tight md:text-6xl">
               Digital Business Card for{" "}
-              <span className="inline-block rounded-md bg-gx-lime px-3 text-gx-night">Photographers</span>{" "}
-              in India
+              <span className="inline-block rounded-md bg-gx-lime px-3 text-gx-night">Photographers</span>
             </h1>
 
             <p className="mx-auto mb-4 max-w-2xl text-xl font-medium text-white/70">
               Share your portfolio, gallery, contact, and social links — all in one link.
             </p>
             <p className="mx-auto mb-10 max-w-xl text-base text-white/50">
-              We design and set up your card in 24 hours. Starting at just ₹499/year.
+              We design and set up your card in 24 hours. Starting at just ₹499/year ($9/year).
             </p>
 
             <Link
@@ -192,7 +191,7 @@ export default function ForPhotographersPage() {
               Ready to grow your photography business?
             </h2>
             <p className="mx-auto mb-8 max-w-xl text-lg text-white/70">
-              Message us on WhatsApp. We&apos;ll set up your digital card in 24 hours — starting at just ₹499/year.
+              Message us on WhatsApp. We&apos;ll set up your digital card in 24 hours — starting at just ₹499/year ($9/year).
             </p>
             <Link
               href={whatsappUrl}
@@ -209,7 +208,7 @@ export default function ForPhotographersPage() {
       <footer className="border-t border-gx-hairline bg-gx-night py-8">
         <div className="mx-auto max-w-6xl px-4 text-center">
           <p className="text-sm text-white/50">
-            © {new Date().getFullYear()} GrowX Digital Card. Digital business cards for photographers across India.
+            © {new Date().getFullYear()} GrowX Digital Card. Digital business cards for photographers worldwide.
           </p>
           <p className="mt-2 text-sm text-white/50">
             A product of{" "}

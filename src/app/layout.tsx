@@ -16,26 +16,27 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL || "https://card.growxdigitech.com"),
   title: {
-    default: "Digital Business Card for Indian Businesses | GrowX Digital Card — ₹499/year",
+    default: "Digital Business Card for Businesses Worldwide | GrowX Digital Card — ₹499/year ($9/year)",
     template: "%s | GrowX Digital Card",
   },
-  description: "Get your digital visiting card made in 24 hours. Trusted by electricians, photographers, CA firms & shops across India. Starting ₹499/year.",
+  description: "Get your digital visiting card made in 24 hours. Trusted by electricians, photographers, CA firms & shops worldwide. Starting ₹499/year ($9/year).",
   applicationName: "GrowX Digital Card",
   authors: [{ name: "GrowX Digitech" }],
   keywords: [
-    "digital business card India",
+    "digital business card worldwide",
     "digital visiting card online",
-    "online visiting card maker India",
+    "online visiting card maker",
     "digital card for small business",
     "₹499 digital business card",
+    "$9 digital business card",
   ],
   openGraph: {
     type: "website",
-    locale: "en_IN",
+    locale: "en_US",
     url: "https://card.growxdigitech.com",
     siteName: "GrowX Digital Card",
-    title: "Digital Business Card for Indian Businesses | GrowX Digital Card — ₹499/year",
-    description: "Get your digital visiting card made in 24 hours. Trusted by electricians, photographers, CA firms & shops across India. Starting ₹499/year.",
+    title: "Digital Business Card for Businesses Worldwide | GrowX Digital Card — ₹499/year ($9/year)",
+    description: "Get your digital visiting card made in 24 hours. Trusted by electricians, photographers, CA firms & shops worldwide. Starting ₹499/year ($9/year).",
   },
   icons: {
     icon: [
