@@ -3,7 +3,7 @@
 // ─── Theme 6 — Linktree (redesign) ──────────────────────────────────────────
 // QR customer-engagement page. First screen, in order: profile → Google
 // Review hero (the primary CTA) → social follow grid → quick actions
-// (Save Contact / Rate us on Google / Install App / Call / Email) → Website / Maps. Everything
+// (Save Contact / Install App / Call / Email) → Website / Maps. Everything
 // below the fold is compact: small left-aligned headings, 12px gaps,
 // no duplicate description, no bottom nav, no decorative banner art.
 // COLOURS ARE DYNAMIC: the layout language is Linktree (pill buttons,
@@ -172,6 +172,20 @@ function Card({ brand, children, id }: { brand: BrandPalette; children: React.Re
       {children}
     </section>
   );
+}
+
+// Review banner heading, matched to the business type — a clinic is not a
+// shop, so "Enjoyed Shopping With Us?" reads wrong there. Matched
+// case-insensitively against the stored category string.
+function reviewHeading(category?: string | null): string {
+  const c = (category ?? "").toLowerCase();
+  if (/(clinic|dental|dentist|doctor|hospital|physio|ayurved|homeopath|medical|diagnostic|health)/.test(c))
+    return "Happy with your visit?";
+  if (/(shop|store|retail|\bmart\b|boutique|mall|electronics|grocery|jewell|fashion|clothing|footwear|mobile|hardware|furniture)/.test(c))
+    return "Enjoyed shopping with us?";
+  if (/(photo|salon|beauty|spa|studio|parlour|parlor|fitness|gym|makeup|barber|design|wedding|event|tutor|coach|consult|agency|service|repair|travel|catering|interior)/.test(c))
+    return "Happy with our work?";
+  return "Enjoyed your experience?";
 }
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -458,11 +472,12 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
     </PillButton>
   ) : null;
 
-  // Quick-action grid: Save Contact is always there; the Google Review
-  // button joins it when a review URL is configured; Call / Email /
-  // Install App join it when available. A lone button spans both columns.
+  // Quick-action grid: Save Contact is always there (the single
+  // primary); Call / Email / Install App join it when available. The
+  // Google Review button is NOT here — the banner above is the only
+  // review CTA on the first screen. A lone button spans both columns.
   const quickCount =
-    1 + (googleReviewUrl ? 1 : 0) + (installAction ? 1 : 0) + (business.phone ? 1 : 0) + (business.email ? 1 : 0);
+    1 + (installAction ? 1 : 0) + (business.phone ? 1 : 0) + (business.email ? 1 : 0);
 
   return (
     <>
@@ -591,20 +606,23 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
         </header>
 
         {/* ── Google Review — the primary CTA ──────────────────────────
-            Brand-primary hero card, first action on the page: stars,
-            one-line pitch, big contrasting button. */}
+            Brand-primary hero strip, first action on the page: stars,
+            one-line pitch, contrasting button. Compact by design — it
+            must stay noticeable (the owner sells the review feature)
+            without dwarfing the business name and Save Contact. The
+            button uses the brand's dark ink, never pure black. */}
         {googleReviewUrl && (
-          <div className="mt-4 px-4">
-            <div className="rounded-[1.75rem] px-5 py-5 text-center" style={{ background: brand.primary }}>
+          <div className="mt-3 px-4">
+            <div className="rounded-[1.5rem] px-4 py-3 text-center" style={{ background: brand.primary }}>
               <div className="flex justify-center gap-0.5" aria-label="5 star rating">
                 {[0, 1, 2, 3, 4].map((i) => (
-                  <Star key={i} className="h-5 w-5 fill-current" style={{ color: brand.onPrimary }} />
+                  <Star key={i} className="h-4 w-4 fill-current" style={{ color: brand.onPrimary }} />
                 ))}
               </div>
-              <p className="mt-2 text-lg font-extrabold leading-snug tracking-[-0.01em]" style={{ color: brand.onPrimary }}>
-                Enjoyed Shopping With Us?
+              <p className="mt-1.5 text-[15px] font-extrabold leading-snug tracking-[-0.01em]" style={{ color: brand.onPrimary }}>
+                {reviewHeading(business.category)}
               </p>
-              <p className="mt-1 text-[13px] leading-snug" style={{ color: brand.onPrimary, opacity: 0.75 }}>
+              <p className="mt-0.5 text-xs leading-snug" style={{ color: brand.onPrimary, opacity: 0.75 }}>
                 Your feedback helps our business grow.
               </p>
               <a
@@ -613,10 +631,10 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                 rel="noreferrer"
                 onClick={() => track("google_review_click")}
                 aria-label="Rate us on Google"
-                style={{ background: brand.heroButtonBg, color: brand.heroButtonText }}
-                className="mt-4 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-[15px] font-semibold transition-[filter,transform] duration-150 hover:brightness-[1.15] focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.99]"
+                style={{ background: brand.dark, color: brand.onDark }}
+                className="mt-2.5 flex min-h-[46px] w-full items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold transition-[filter,transform] duration-150 hover:brightness-[1.15] focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.99]"
               >
-                <Star className="h-5 w-5 fill-current" style={{ color: brand.heroButtonText }} /> Rate Us on Google
+                <Star className="h-4 w-4 fill-current" style={{ color: brand.onDark }} /> Rate us on Google
               </a>
             </div>
           </div>
@@ -624,7 +642,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
 
         {/* ── Social follow grid — platform identity on the icon chip ── */}
         {(youtubeLink || instagramLink || facebookLink || whatsappUrl) && (
-          <div className="mt-3 grid grid-cols-2 gap-2.5 px-4">
+          <div className="mt-2.5 grid grid-cols-2 gap-2.5 px-4">
             {youtubeLink && (
               <SocialGridButton
                 brand={brand}
@@ -676,8 +694,8 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           </div>
         )}
 
-        {/* ── Quick actions: Save Contact / Rate us on Google / Install App / Call / Email ── */}
-        <div className="mt-2.5 grid grid-cols-2 gap-2.5 px-4">
+        {/* ── Quick actions: Save Contact (primary) / Install App / Call / Email ── */}
+        <div className="mt-2 grid grid-cols-2 gap-2.5 px-4">
           <PillButton
             brand={brand}
             href={`/api/vcard/${business.slug}`}
@@ -690,21 +708,6 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           >
             <Download className="h-4 w-4" /> Save Contact
           </PillButton>
-          {/* Google Review — prominent first-screen action, only when a
-              review URL is configured (hero card above carries the same
-              link; this puts it next to Save Contact). */}
-          {googleReviewUrl && (
-            <PillButton
-              brand={brand}
-              href={googleReviewUrl}
-              variant="primary"
-              size="compact"
-              onClick={() => track("google_review_click")}
-              ariaLabel="Rate us on Google"
-            >
-              <Star className="h-4 w-4 fill-current" /> Rate us on Google
-            </PillButton>
-          )}
           {installAction}
           {business.phone && (
             <PillButton
@@ -732,7 +735,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
 
         {/* ── Website / Maps ─────────────────────────────────────────── */}
         {(websiteUrl || business.googleMapsUrl) && (
-          <div className="mt-2.5 grid grid-cols-2 gap-2.5 px-4">
+          <div className="mt-2 grid grid-cols-2 gap-2.5 px-4">
             {websiteUrl && (
               <PillButton
                 brand={brand}
