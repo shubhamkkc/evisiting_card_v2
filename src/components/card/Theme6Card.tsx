@@ -3,7 +3,7 @@
 // ─── Theme 6 — Linktree (redesign) ──────────────────────────────────────────
 // QR customer-engagement page. First screen, in order: profile → Google
 // Review hero (the primary CTA) → social follow grid → quick actions
-// (Save Contact / Install App / Call / Email) → Website / Maps. Everything
+// (Save Contact / Rate us on Google / Install App / Call / Email) → Website / Maps. Everything
 // below the fold is compact: small left-aligned headings, 12px gaps,
 // no duplicate description, no bottom nav, no decorative banner art.
 // COLOURS ARE DYNAMIC: the layout language is Linktree (pill buttons,
@@ -26,7 +26,7 @@ import {
   Phone, MessageCircle, Mail, Globe, MapPin, Download,
   Facebook, Instagram, Linkedin, Youtube, Twitter,
   Music, Ghost, Link as LinkIcon, Star, Send,
-  X, Eye, Share2, Copy, Check,
+  X, Share2, Copy, Check,
 } from "lucide-react";
 import { resolveBrandPalette, type BrandPalette } from "@/lib/brand";
 
@@ -220,6 +220,7 @@ interface BeforeInstallPromptEvent extends Event {
 // ─── Main component ─────────────────────────────────────────────────────────
 export default function Theme6Card({ business, viewCount }: { business: Theme6Business; viewCount: number }) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [aboutExpanded, setAboutExpanded] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [cardUrl, setCardUrl] = useState("");
   const [copied, setCopied] = useState(false);
@@ -433,7 +434,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
   const installAction = !pwaInstalled && pwaPrompt ? (
     <PillButton
       brand={brand}
-      variant="primary"
+      variant="secondary"
       size="compact"
       onClick={async () => {
         pwaPrompt.prompt();
@@ -448,7 +449,7 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
   ) : !pwaInstalled && isIOS ? (
     <PillButton
       brand={brand}
-      variant="primary"
+      variant="secondary"
       size="compact"
       onClick={() => document.getElementById("t6-install")?.scrollIntoView({ behavior: "smooth" })}
       ariaLabel="Install this card as an app"
@@ -457,10 +458,11 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
     </PillButton>
   ) : null;
 
-  // Quick-action grid: Save Contact is always there; Call / Email /
+  // Quick-action grid: Save Contact is always there; the Google Review
+  // button joins it when a review URL is configured; Call / Email /
   // Install App join it when available. A lone button spans both columns.
   const quickCount =
-    1 + (installAction ? 1 : 0) + (business.phone ? 1 : 0) + (business.email ? 1 : 0);
+    1 + (googleReviewUrl ? 1 : 0) + (installAction ? 1 : 0) + (business.phone ? 1 : 0) + (business.email ? 1 : 0);
 
   return (
     <>
@@ -486,13 +488,9 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           "--t6-outline": brand.text,
         } as React.CSSProperties}
       >
-        {/* Views badge */}
-        {business.showCardViews && (
-          <div className="absolute right-4 top-4 z-[60] flex items-center gap-1.5 rounded-full bg-black/80 px-3 py-1.5 text-[10px] font-bold text-white shadow-lg">
-            <Eye className="h-3.5 w-3.5" />
-            {viewCount} Views
-          </div>
-        )}
+        {/* NOTE: the public view-count badge was removed — a low count hurts
+            credibility for new businesses. View counting itself still runs
+            in BusinessCard (/api/view) and owners see views in admin. */}
 
         {/* ── Profile header ─────────────────────────────────────────── */}
         <header className="px-4 pt-5 text-center">
@@ -507,6 +505,14 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
                 priority
                 sizes="(max-width: 430px) 100vw, 430px"
                 className="object-cover"
+              />
+              {/* Brand fade: the bottom of the cover melts into the page
+                  background (a brand colour), so the logo sits on a branded
+                  fade instead of a hard photo edge. Subtle by design. */}
+              <div
+                className="pointer-events-none absolute inset-0"
+                style={{ background: `linear-gradient(to bottom, transparent 55%, ${brand.pageBackground} 100%)` }}
+                aria-hidden="true"
               />
             </div>
           )}
@@ -556,12 +562,25 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
               {business.category}
             </span>
           )}
-          {/* Compact description — max 2 lines. The full text lives nowhere
-              else on the page (no duplicate About paragraph). */}
+          {/* About — full text behind a Read more / Show less toggle.
+              Short abouts (≤120 chars) render exactly as before. */}
           {business.about && (
-            <p className="mx-auto mt-2.5 line-clamp-2 max-w-[330px] text-sm font-normal leading-[1.5]" style={{ color: brand.text }}>
-              {business.about}
-            </p>
+            <div className="mx-auto mt-2.5 max-w-[330px]">
+              <p className={`text-sm font-normal leading-[1.5] ${aboutExpanded ? "" : "line-clamp-2"}`} style={{ color: brand.text }}>
+                {business.about}
+              </p>
+              {business.about.length > 120 && (
+                <button
+                  type="button"
+                  onClick={() => setAboutExpanded((v) => !v)}
+                  aria-expanded={aboutExpanded}
+                  className="mt-1 text-[13px] font-semibold"
+                  style={{ color: brand.primary }}
+                >
+                  {aboutExpanded ? "Show less" : "Read more"}
+                </button>
+              )}
+            </div>
           )}
           {business.address && (
             <p className="mt-2 flex items-center justify-center gap-1.5 text-[13px]" style={{ color: brand.textMuted }}>
@@ -569,9 +588,6 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
               {business.address.split(",").slice(0, 2).join(",").trim()}
             </p>
           )}
-          <p className="mt-1.5 text-[13px] font-medium" style={{ color: brand.textMuted }}>
-            Welcome! Stay connected with us.
-          </p>
         </header>
 
         {/* ── Google Review — the primary CTA ──────────────────────────
@@ -660,12 +676,12 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           </div>
         )}
 
-        {/* ── Quick actions: Save Contact / Install App / Call / Email ── */}
+        {/* ── Quick actions: Save Contact / Rate us on Google / Install App / Call / Email ── */}
         <div className="mt-2.5 grid grid-cols-2 gap-2.5 px-4">
           <PillButton
             brand={brand}
             href={`/api/vcard/${business.slug}`}
-            variant="dark"
+            variant="primary"
             size="compact"
             className={quickCount === 1 ? "col-span-2" : ""}
             download
@@ -674,6 +690,21 @@ export default function Theme6Card({ business, viewCount }: { business: Theme6Bu
           >
             <Download className="h-4 w-4" /> Save Contact
           </PillButton>
+          {/* Google Review — prominent first-screen action, only when a
+              review URL is configured (hero card above carries the same
+              link; this puts it next to Save Contact). */}
+          {googleReviewUrl && (
+            <PillButton
+              brand={brand}
+              href={googleReviewUrl}
+              variant="primary"
+              size="compact"
+              onClick={() => track("google_review_click")}
+              ariaLabel="Rate us on Google"
+            >
+              <Star className="h-4 w-4 fill-current" /> Rate us on Google
+            </PillButton>
+          )}
           {installAction}
           {business.phone && (
             <PillButton
