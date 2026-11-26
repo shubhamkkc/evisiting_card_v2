@@ -20,9 +20,10 @@ export default function LoginPage() {
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-    setLoading(false);
-
     if (error) {
+      // Only stop loading on error — on success keep the button
+      // disabled + spinning until the redirect lands.
+      setLoading(false);
       setError(
         error.message === "Invalid login credentials"
           ? "Invalid email or password."
@@ -91,6 +92,9 @@ export default function LoginPage() {
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
+        <p className="text-center text-sm text-gray-500 mt-6">
+          <a href="/forgot-password" className="text-blue-600 font-medium hover:underline">Forgot password?</a>
+        </p>
       </div>
     </div>
   );

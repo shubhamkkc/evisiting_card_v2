@@ -3,22 +3,27 @@
 import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Lock } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
+      // Only stop loading on error — on success keep the button
+      // disabled + spinning until the redirect lands.
+      setLoading(false);
       setError(
         error.message === "Invalid login credentials"
           ? "Invalid email or password"
@@ -74,11 +79,16 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
+          <div className="text-right -mt-3">
+            <a href="/forgot-password" className="text-sm text-blue-600 hover:underline">Forgot password?</a>
+          </div>
           <button
             type="submit"
-            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
+            disabled={loading}
+            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            Sign In
+            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
         <p className="text-center text-sm text-gray-500 mt-6">

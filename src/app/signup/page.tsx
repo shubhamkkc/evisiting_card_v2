@@ -15,6 +15,7 @@ export default function SignupPage() {
   const [confirm, setConfirm] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
   const [cooldown, setCooldown] = useState(0);
@@ -50,9 +51,12 @@ export default function SignupPage() {
     setLoading(true);
     const supabase = createClient();
     const { data, error } = await supabase.auth.signUp({ email, password });
-    setLoading(false);
 
     if (error) {
+      // Only stop loading on error — on success keep the button
+      // disabled + spinning until the redirect lands, so a second
+      // click can't re-submit.
+      setLoading(false);
       if (error.message.toLowerCase().includes("already registered")) {
         setError("This email is already registered. Please log in instead.");
       } else {
@@ -84,9 +88,13 @@ export default function SignupPage() {
       token: otp.trim(),
       type: "signup",
     });
-    setLoading(false);
 
     if (error || !data.session) {
+      // Only stop loading on error — on success keep the button
+      // disabled + spinning until the redirect lands. The token is
+      // single-use: a second click here used to fail with
+      // "Token has expired or is invalid".
+      setLoading(false);
       setError(
         error?.message ||
           "Verification failed. Check the code and try again."
@@ -98,11 +106,13 @@ export default function SignupPage() {
   }
 
   async function handleResend() {
-    if (cooldown > 0) return;
+    if (cooldown > 0 || resending) return;
     setError("");
     setInfo("");
+    setResending(true);
     const supabase = createClient();
     const { error } = await supabase.auth.resend({ type: "signup", email });
+    setResending(false);
     if (error) {
       setError(error.message);
       return;
@@ -245,10 +255,10 @@ export default function SignupPage() {
             <button
               type="button"
               onClick={handleResend}
-              disabled={cooldown > 0}
-              style={{ background: "none", border: "none", color: cooldown > 0 ? "rgba(255,255,255,0.3)" : "#0ea5e9", fontSize: "13px", cursor: cooldown > 0 ? "not-allowed" : "pointer", padding: "4px" }}
+              disabled={cooldown > 0 || resending}
+              style={{ background: "none", border: "none", color: cooldown > 0 || resending ? "rgba(255,255,255,0.3)" : "#0ea5e9", fontSize: "13px", cursor: cooldown > 0 || resending ? "not-allowed" : "pointer", padding: "4px" }}
             >
-              {cooldown > 0 ? `Resend code in ${cooldown}s` : "Didn't get the code? Resend it"}
+              {resending ? "Sending…" : cooldown > 0 ? `Resend code in ${cooldown}s` : "Didn't get the code? Resend it"}
             </button>
           </form>
         )}

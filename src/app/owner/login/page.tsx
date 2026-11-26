@@ -149,6 +149,11 @@ export default function OwnerLoginPage() {
             </div>
           </div>
 
+          {/* Forgot password */}
+          <div style={{ textAlign: "right", marginTop: "-8px" }}>
+            <a href="/forgot-password" style={{ color: "#0ea5e9", fontSize: "13px", textDecoration: "none" }}>Forgot password?</a>
+          </div>
+
           {/* Error */}
           {error && (
             <div style={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "10px", padding: "12px 14px", color: "#fca5a5", fontSize: "13px" }}>
