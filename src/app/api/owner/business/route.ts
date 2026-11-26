@@ -1,16 +1,98 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
 // Fields an owner is NOT allowed to change
 const ADMIN_ONLY_FIELDS = ["isActive", "ownerEmail", "ownerPassword", "slug", "id", "createdAt", "updatedAt"];
 
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+// POST /api/owner/business — self-serve: a signed-in user creates their
+// first (and only) business card. Plan is "free", theme is Theme 6.
+export async function POST(req: Request) {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.role === "admin") {
+      return NextResponse.json(
+        { error: "Admins create cards from the admin dashboard." },
+        { status: 400 }
+      );
+    }
+    if (session.businessId) {
+      return NextResponse.json(
+        { error: "You already have a card." },
+        { status: 400 }
+      );
+    }
+
+    const body = await req.json().catch(() => null);
+    const businessName = (body?.businessName ?? "").trim();
+    const phone = (body?.phone ?? "").trim();
+    let slug = slugify(body?.slug ?? businessName);
+
+    if (!businessName) {
+      return NextResponse.json({ error: "Business name is required." }, { status: 400 });
+    }
+    if (!phone) {
+      return NextResponse.json({ error: "Phone is required." }, { status: 400 });
+    }
+    if (!slug) {
+      return NextResponse.json({ error: "Card link is required." }, { status: 400 });
+    }
+    if (slug.length < 3) {
+      return NextResponse.json(
+        { error: "Card link must be at least 3 characters." },
+        { status: 400 }
+      );
+    }
+
+    // Ensure a unique slug (append -2, -3, ... when taken).
+    let candidate = slug;
+    let n = 2;
+    while (await prisma.business.findUnique({ where: { slug: candidate } })) {
+      candidate = `${slug}-${n++}`;
+    }
+    slug = candidate;
+
+    const business = await prisma.business.create({
+      data: {
+        slug,
+        businessName,
+        ownerName: (body?.ownerName ?? "").trim() || null,
+        phone,
+        email: session.user.email,
+        ownerEmail: session.user.email,
+        authUserId: session.user.id,
+        category: (body?.category ?? "").trim() || null,
+        plan: "free",
+        theme: "theme6",
+        isActive: true,
+      },
+    });
+
+    return NextResponse.json(business, { status: 201 });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    const role = (session?.user as any)?.role;
-    const businessId = (session?.user as any)?.businessId;
+    const session = await getSession();
+    const role = session?.role;
+    const businessId = session?.businessId;
 
     if (!session || role !== "owner" || !businessId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -27,9 +109,9 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    const role = (session?.user as any)?.role;
-    const businessId = (session?.user as any)?.businessId;
+    const session = await getSession();
+    const role = session?.role;
+    const businessId = session?.businessId;
 
     if (!session || role !== "owner" || !businessId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

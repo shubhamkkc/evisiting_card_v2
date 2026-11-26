@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import * as bcrypt from "bcryptjs";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== "admin") {
+    const session = await getSession();
+    if (!session || session.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -22,17 +20,17 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== "admin") {
+    const session = await getSession();
+    if (!session || session.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await req.json();
 
-    // Hash ownerPassword if provided
-    if (body.ownerPassword) {
-      body.ownerPassword = await bcrypt.hash(body.ownerPassword, 12);
-    }
+    // Owner passwords are no longer stored: owners sign in with Supabase
+    // Auth (email OTP) and link automatically by email. Drop the field so
+    // no new bcrypt hash is ever written.
+    delete body.ownerPassword;
 
     // Handle empty ownerEmail
     if (body.ownerEmail === "") {

@@ -39,6 +39,13 @@ model Business {
   isActive      Boolean  @default(true)
   ownerEmail    String?  @unique
   ownerPassword String?
+  /** Supabase Auth user id (auth.users). Null for businesses created before
+      the Supabase Auth switch; linked automatically on first owner sign-in
+      when the Supabase account email matches ownerEmail (OTP proves it). */
+  authUserId    String?  @unique
+  /** Subscription plan: "free" (default) or "paid". Free tier gating reads
+      this field; every signup starts on "free". */
+  plan          String   @default("free")
   showCardViews Boolean  @default(true)
   cardViews     Int      @default(0)
   createdAt     DateTime @default(now())

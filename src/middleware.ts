@@ -1,16 +1,45 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET ?? "fallback-dev-secret-do-not-use-in-prod" });
+  const res = NextResponse.next({ request: req });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            res.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const { pathname } = req.nextUrl;
 
-  const isOwnerRoute = pathname.startsWith("/owner/dashboard") || pathname.startsWith("/owner/edit");
-  const isAdminRoute = pathname.startsWith("/admin/dashboard") || pathname.startsWith("/admin/businesses");
+  const isOwnerRoute =
+    pathname.startsWith("/owner/dashboard") ||
+    pathname.startsWith("/owner/edit") ||
+    pathname.startsWith("/owner/create");
+  const isAdminRoute =
+    pathname.startsWith("/admin/dashboard") ||
+    pathname.startsWith("/admin/businesses");
+
+  const adminEmail = process.env.ADMIN_EMAIL ?? "admin@evisitingcard.com";
+  const isAdmin =
+    !!user?.email && user.email.toLowerCase() === adminEmail.toLowerCase();
 
   // Not authenticated
-  if (!token) {
+  if (!user) {
     if (isOwnerRoute) {
       return NextResponse.redirect(new URL("/owner/login", req.url));
     }
@@ -19,20 +48,15 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // Authenticated but wrong role
-  if (token && isOwnerRoute && token.role !== "owner") {
-    // Admin accessing owner route → redirect to admin dashboard
-    if (token.role === "admin") {
-      return NextResponse.redirect(new URL("/admin/dashboard", req.url));
-    }
-    return NextResponse.redirect(new URL("/owner/login", req.url));
-  }
-
-  if (token && isAdminRoute && token.role !== "admin") {
+  // Authenticated but wrong area
+  if (user && isAdminRoute && !isAdmin) {
     return NextResponse.redirect(new URL("/owner/dashboard", req.url));
   }
+  if (user && isOwnerRoute && isAdmin) {
+    return NextResponse.redirect(new URL("/admin/dashboard", req.url));
+  }
 
-  return NextResponse.next();
+  return res;
 }
 
 export const config = {
@@ -45,5 +69,7 @@ export const config = {
     "/owner/dashboard",
     "/owner/edit/:path*",
     "/owner/edit",
+    "/owner/create/:path*",
+    "/owner/create",
   ],
 };

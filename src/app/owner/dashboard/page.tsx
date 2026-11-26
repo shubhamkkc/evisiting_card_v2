@@ -1,15 +1,15 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Edit3, ExternalLink, LogOut, Building2, Phone, Mail, Globe, MapPin, CheckCircle, XCircle } from "lucide-react";
 
 export default async function OwnerDashboardPage() {
-  const session = await getServerSession(authOptions);
-  const businessId = (session?.user as any)?.businessId;
+  const session = await getSession();
+  const businessId = session?.businessId;
 
-  if (!businessId) redirect("/owner/login");
+  if (!session) redirect("/owner/login");
+  if (!businessId) redirect("/owner/create");
 
   const business = await prisma.business.findUnique({ where: { id: businessId } });
   if (!business) redirect("/owner/login");

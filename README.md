@@ -29,16 +29,22 @@ DATABASE_URL=postgresql://postgres:[DB_PASSWORD]@db.vicxfvdfrhrzjcocyrvt.supabas
 ## Environment variables
 
 ```text
-DATABASE_URL=postgresql://...
-NEXTAUTH_URL=https://card.growxdigitech.com
-NEXTAUTH_SECRET=...
-ADMIN_EMAIL=...
-ADMIN_PASSWORD=...
+DATABASE_URL=postgresql://...                       # Supabase direct connection, port 5432
+NEXTAUTH_URL=https://card.growxdigitech.com        # site URL (still read under this name)
+NEXT_PUBLIC_SUPABASE_URL=https://vicxfvdfrhrzjcocyrvt.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...                  # Supabase dashboard → Settings → API → anon public
+ADMIN_EMAIL=...                                    # super admin = this Supabase Auth user
+ADMIN_PASSWORD=...                                 # unused since the Supabase Auth switch (kept for reference)
 CLOUDINARY_CLOUD_NAME=...
 CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
 GOOGLE_PLACES_API_KEY=...   # Google reviews sync
 ```
+
+Auth is Supabase Auth (email + OTP). Auth emails go through Gmail SMTP,
+configured in the Supabase dashboard (Authentication → Emails → SMTP
+Settings, smtp.gmail.com:587, Gmail App Password) — the built-in sender only
+delivers to team members, 2/hour, so it cannot serve real signups.
 
 ## Local development
 

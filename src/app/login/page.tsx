@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock } from "lucide-react";
@@ -15,17 +15,25 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (res?.error) {
-      setError("Invalid email or password");
-    } else {
-      router.push("/admin/dashboard");
+    if (error) {
+      setError(
+        error.message === "Invalid login credentials"
+          ? "Invalid email or password"
+          : error.message === "Email not confirmed"
+            ? "Please verify your email first — check your inbox for the code."
+            : error.message
+      );
+      return;
     }
+
+    const res = await fetch("/api/auth/session");
+    const data = await res.json().catch(() => ({}));
+    if (data.role === "admin") router.push("/admin/dashboard");
+    else if (data.role === "owner") router.push("/owner/dashboard");
+    else router.push("/owner/create");
   };
 
   return (
@@ -73,6 +81,10 @@ export default function LoginPage() {
             Sign In
           </button>
         </form>
+        <p className="text-center text-sm text-gray-500 mt-6">
+          Don&apos;t have an account?{" "}
+          <a href="/signup" className="text-blue-600 font-medium hover:underline">Sign up free →</a>
+        </p>
       </div>
     </div>
   );

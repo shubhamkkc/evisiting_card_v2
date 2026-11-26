@@ -1,73 +1,66 @@
-import { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import * as bcrypt from "bcryptjs";
+// Session + role helpers for Supabase Auth (replaces NextAuth).
+// Roles: "admin" (email matches ADMIN_EMAIL), "owner" (has a Business),
+// "user" (signed in but no business yet — needs /owner/create).
 import prisma from "@/lib/prisma";
+import { createClient } from "@/lib/supabase/server";
 
-export const authOptions: NextAuthOptions = {
-  providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-
-        // --- Check Super Admin ---
-        const adminEmail = process.env.ADMIN_EMAIL ?? "admin@evisitingcard.com";
-        const adminPassword = process.env.ADMIN_PASSWORD;
-
-        if (credentials.email === adminEmail && credentials.password === adminPassword) {
-          return { id: "admin", name: "Admin", email: credentials.email, role: "admin" };
-        }
-
-        // --- Check Business Owner ---
-        // Use type assertion to handle out-of-sync Prisma types
-        const business = await (prisma.business as any).findUnique({
-          where: { ownerEmail: credentials.email },
-        });
-
-        if (business && business.ownerPassword) {
-          const isValid = await bcrypt.compare(credentials.password, business.ownerPassword);
-          if (isValid) {
-            return {
-              id: business.id,
-              name: business.ownerName || business.businessName,
-              email: credentials.email,
-              role: "owner",
-              businessId: business.id,
-            };
-          }
-        }
-
-        return null;
-      },
-    }),
-  ],
-  pages: {
-    signIn: "/admin/login",
-  },
-  session: {
-    strategy: "jwt",
-  },
-  secret: process.env.NEXTAUTH_SECRET ?? "fallback-dev-secret-do-not-use-in-prod",
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = (user as any).role;
-        token.businessId = (user as any).businessId;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (token && session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).role = token.role;
-        (session.user as any).businessId = token.businessId;
-      }
-      return session;
-    },
-  },
+export type SessionInfo = {
+  user: { id: string; email: string };
+  role: "admin" | "owner" | "user";
+  businessId: string | null;
 };
+
+export function isAdminEmail(email: string | undefined | null): boolean {
+  const adminEmail = process.env.ADMIN_EMAIL ?? "admin@evisitingcard.com";
+  return !!email && email.toLowerCase() === adminEmail.toLowerCase();
+}
+
+export async function getSession(): Promise<SessionInfo | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user || !user.email) return null;
+
+  if (isAdminEmail(user.email)) {
+    return {
+      user: { id: user.id, email: user.email },
+      role: "admin",
+      businessId: null,
+    };
+  }
+
+  // Link by authUserId first, then by ownerEmail. The email match auto-links
+  // businesses created before the Supabase Auth switch on the owner's first
+  // sign-in — the email OTP proves they own that inbox.
+  let business = await prisma.business.findUnique({
+    where: { authUserId: user.id },
+  });
+
+  if (!business) {
+    business = await prisma.business.findUnique({
+      where: { ownerEmail: user.email },
+    });
+    if (business && !business.authUserId) {
+      business = await prisma.business.update({
+        where: { id: business.id },
+        data: { authUserId: user.id },
+      });
+    }
+  }
+
+  if (!business) {
+    return {
+      user: { id: user.id, email: user.email },
+      role: "user",
+      businessId: null,
+    };
+  }
+
+  return {
+    user: { id: user.id, email: user.email },
+    role: "owner",
+    businessId: business.id,
+  };
+}

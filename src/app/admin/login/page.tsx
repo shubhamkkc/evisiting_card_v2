@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { createClient } from "@/lib/supabase/client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock } from "lucide-react";
@@ -17,19 +17,27 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     setLoading(false);
 
-    if (res?.error) {
-      setError("Invalid email or password. Try admin@evisitingcard.com / admin123");
-    } else {
-      router.push("/admin/dashboard");
+    if (error) {
+      setError(
+        error.message === "Invalid login credentials"
+          ? "Invalid email or password."
+          : error.message === "Email not confirmed"
+            ? "Please verify your email first — check your inbox for the code."
+            : error.message
+      );
+      return;
     }
+
+    const res = await fetch("/api/auth/session");
+    const data = await res.json().catch(() => ({}));
+    if (data.role === "admin") router.push("/admin/dashboard");
+    else if (data.role === "owner") router.push("/owner/dashboard");
+    else router.push("/owner/create");
   };
 
   return (
@@ -59,7 +67,7 @@ export default function LoginPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@evisitingcard.com"
+              placeholder="you@example.com"
             />
           </div>
           <div>
@@ -71,7 +79,7 @@ export default function LoginPage() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="admin123"
+              placeholder="••••••••"
             />
           </div>
           <button
@@ -83,9 +91,6 @@ export default function LoginPage() {
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
-        <p className="text-center text-xs text-gray-400 mt-6">
-          Default: admin@evisitingcard.com / admin123
-        </p>
       </div>
     </div>
   );

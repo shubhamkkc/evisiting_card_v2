@@ -56,7 +56,7 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
       brandPalette: "",
       yearEstd: "", theme: "theme1", themeColor: "#0ea5e9", isActive: true,
       showCardViews: true,
-      ownerEmail: "", ownerPassword: "",
+      ownerEmail: "",
       socialLinks: [
         { platform: "facebook", url: "" },
         { platform: "instagram", url: "" }
@@ -321,10 +321,7 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
       gallery: JSON.stringify(formData.gallery || []),
     };
 
-    // Only include ownerPassword if it was entered (admin is setting/changing it)
-    if (!submitData.ownerPassword) {
-      delete submitData.ownerPassword;
-    }
+    // Owners sign in with Supabase Auth (email OTP) — no password is set here.
     // Remove empty ownerEmail
     if (!submitData.ownerEmail) {
       submitData.ownerEmail = null;
@@ -692,16 +689,9 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {isEditing ? "New Password (leave blank to keep current)" : "Owner Password"}
-            </label>
-            <input
-              type="text"
-              className="block w-full rounded-lg border-gray-300 px-4 py-2 border outline-none focus:ring-2 focus:ring-violet-500 font-mono"
-              placeholder={isEditing ? "Enter new password to change..." : "Set a secure password"}
-              value={formData.ownerPassword || ""}
-              onChange={e => setFormData({...formData, ownerPassword: e.target.value})}
-            />
+            <p className="text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+              The owner signs in with this email + a one-time code (Supabase Auth) — no password to set here.
+            </p>
           </div>
 
           {(formData.ownerEmail) && (

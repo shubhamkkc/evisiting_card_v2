@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { LogOut, LayoutDashboard, Plus } from "lucide-react";
@@ -9,9 +8,9 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
+  const session = await getSession();
 
-  if (!session) {
+  if (!session || session.role !== "admin") {
     redirect("/admin/login");
   }
 
@@ -35,7 +34,7 @@ export default async function AdminLayout({
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 sm:px-10">
-          <h1 className="font-semibold text-gray-800">Hello, {session?.user?.name ?? "Admin"}</h1>
+          <h1 className="font-semibold text-gray-800">Hello, {session?.user?.email ?? "Admin"}</h1>
           <a href="/api/auth/signout" className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 font-medium transition-colors">
             Logout <LogOut className="w-4 h-4" />
           </a>

@@ -5,14 +5,13 @@
 // failed extraction can never block a logo upload or a save.
 // Requires a signed-in admin or owner.
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { extractBrandFromUrl } from "@/lib/brand-extract";
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    const role = (session?.user as any)?.role;
+    const session = await getSession();
+    const role = session?.role;
     if (!session || (role !== "admin" && role !== "owner")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

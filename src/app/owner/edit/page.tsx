@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import OwnerBusinessForm from "@/components/owner/OwnerBusinessForm";
@@ -7,10 +6,11 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export default async function OwnerEditPage() {
-  const session = await getServerSession(authOptions);
-  const businessId = (session?.user as any)?.businessId;
+  const session = await getSession();
+  const businessId = session?.businessId;
 
-  if (!businessId) redirect("/owner/login");
+  if (!session) redirect("/owner/login");
+  if (!businessId) redirect("/owner/create");
 
   const business = await prisma.business.findUnique({ where: { id: businessId } });
   if (!business) notFound();

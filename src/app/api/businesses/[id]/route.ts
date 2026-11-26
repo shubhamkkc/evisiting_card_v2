@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import bcrypt from "bcryptjs";
 
 export async function GET(
   req: Request,
@@ -11,8 +9,8 @@ export async function GET(
   try {
     const { id } = await params;
     
-    const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== "admin") {
+    const session = await getSession();
+    if (!session || session.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -37,17 +35,15 @@ export async function PUT(
   try {
     const { id } = await params;
 
-    const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== "admin") {
+    const session = await getSession();
+    if (!session || session.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await req.json();
 
-    // Hash ownerPassword if provided
-    if (body.ownerPassword) {
-      body.ownerPassword = await bcrypt.hash(body.ownerPassword, 12);
-    }
+    // Owner passwords are no longer stored (Supabase Auth email OTP).
+    delete body.ownerPassword;
 
     // Handle null ownerEmail (remove unique constraint issue)
     if (body.ownerEmail === null || body.ownerEmail === "") {
@@ -72,8 +68,8 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== "admin") {
+    const session = await getSession();
+    if (!session || session.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

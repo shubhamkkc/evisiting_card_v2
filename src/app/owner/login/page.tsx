@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Loader2, Building2, Lock, Mail, Eye, EyeOff } from "lucide-react";
 
@@ -18,19 +18,26 @@ export default function OwnerLoginPage() {
     setLoading(true);
     setError("");
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-      callbackUrl: "/owner/dashboard",
-    });
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (result?.error) {
-      setError("Invalid email or password. Please contact your card administrator.");
+    if (error) {
+      setError(
+        error.message === "Invalid login credentials"
+          ? "Invalid email or password. Please contact your card administrator."
+          : error.message === "Email not confirmed"
+            ? "Please verify your email first — check your inbox for the code."
+            : error.message
+      );
       setLoading(false);
-    } else {
-      router.push("/owner/dashboard");
+      return;
     }
+
+    const res = await fetch("/api/auth/session");
+    const data = await res.json().catch(() => ({}));
+    if (data.role === "admin") router.push("/admin/dashboard");
+    else if (data.role === "owner") router.push("/owner/dashboard");
+    else router.push("/owner/create");
   };
 
   return (
@@ -177,6 +184,10 @@ export default function OwnerLoginPage() {
         </form>
 
         <p style={{ textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: "12px", marginTop: "24px" }}>
+          New here?{" "}
+          <a href="/signup" style={{ color: "#0ea5e9", textDecoration: "none" }}>Create your free card →</a>
+        </p>
+        <p style={{ textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: "12px", marginTop: "8px" }}>
           Are you the platform admin?{" "}
           <a href="/admin/login" style={{ color: "#0ea5e9", textDecoration: "none" }}>Admin Login →</a>
         </p>
