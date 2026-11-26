@@ -1,35 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GrowX Digital Card
 
-## Getting Started
-First, run the development server:
+Digital visiting cards for small businesses — one link with call, WhatsApp,
+Google Maps, services, photos and Google reviews. Live at
+[card.growxdigitech.com](https://card.growxdigitech.com).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Stack
+
+- Next.js 16 + React 19 (App Router)
+- Prisma ORM + PostgreSQL
+- NextAuth v4 (email + password, admin and business-owner roles)
+- Cloudinary (images), node-vibrant (brand palette from logo)
+- Hosted on Netlify, auto-deploys on push to `master`
+
+## Database
+
+Production database is **Supabase** (PostgreSQL 17). Migrated from Neon on
+26 Nov 2026 with `pg_dump` / restore; 16 businesses and 25 events verified
+on both sides.
+
+`DATABASE_URL` must be the **direct connection (port 5432)**, not the pooled
+connection (6543), because the Netlify build runs `prisma db push`, which
+fails through PgBouncer:
+
+```text
+DATABASE_URL=postgresql://postgres:[DB_PASSWORD]@db.vicxfvdfrhrzjcocyrvt.supabase.co:5432/postgres
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+DATABASE_URL=postgresql://...
+NEXTAUTH_URL=https://card.growxdigitech.com
+NEXTAUTH_SECRET=...
+ADMIN_EMAIL=...
+ADMIN_PASSWORD=...
+CLOUDINARY_CLOUD_NAME=...
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
+GOOGLE_PLACES_API_KEY=...   # Google reviews sync
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Local development
 
-## Learn More
+```bash
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open [http://localhost:3000](http://localhost:3000).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Push to `master` — Netlify builds with `npx prisma db push && npm run build`
+and deploys automatically. Allow ~3 minutes before checking a new page live.
 
-## Deploy on Vercel
+## Themes
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Cards use themes 1–6. Theme 6 is the Linktree-style card; its colours come
+from each business's own logo via the Dynamic Brand Identity Engine
+(`Business.brandPalette`), generated on logo upload.
