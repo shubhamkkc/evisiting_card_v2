@@ -69,7 +69,7 @@ export default function SignupPage() {
 
     setStep("otp");
     setCooldown(60);
-    setInfo(`We sent a 6-digit code to ${email}. Enter it below to verify your email.`);
+    setInfo(`We sent a verification code to ${email}. Enter it below to verify your email.`);
   }
 
   async function handleVerifyOtp(e: React.FormEvent) {
@@ -146,7 +146,7 @@ export default function SignupPage() {
           <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "14px", margin: 0 }}>
             {step === "form"
               ? "Sign up free — your first digital card is on us."
-              : "Enter the 6-digit code we emailed you."}
+              : "Enter the code we emailed you."}
           </p>
         </div>
 
@@ -219,25 +219,25 @@ export default function SignupPage() {
         ) : (
           <form onSubmit={handleVerifyOtp} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div>
-              <label style={{ display: "block", color: "rgba(255,255,255,0.7)", fontSize: "13px", fontWeight: 500, marginBottom: "8px" }}>6-digit code</label>
+              <label style={{ display: "block", color: "rgba(255,255,255,0.7)", fontSize: "13px", fontWeight: 500, marginBottom: "8px" }}>Verification code</label>
               <div style={{ position: "relative" }}>
                 <ShieldCheck style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)", width: "16px", height: "16px" }} />
                 <input
                   type="text"
                   inputMode="numeric"
                   required
-                  maxLength={6}
+                  maxLength={8}
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                  placeholder="123456"
+                  placeholder="12345678"
                   style={{ width: "100%", padding: "12px 16px 12px 42px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", color: "white", fontSize: "20px", letterSpacing: "8px", outline: "none", boxSizing: "border-box" }}
                 />
               </div>
             </div>
             <button
               type="submit"
-              disabled={loading || otp.length !== 6}
-              style={{ width: "100%", padding: "13px", background: loading || otp.length !== 6 ? "rgba(14,165,233,0.5)" : "linear-gradient(135deg, #0ea5e9, #8b5cf6)", border: "none", borderRadius: "12px", color: "white", fontSize: "15px", fontWeight: 600, cursor: loading || otp.length !== 6 ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "4px" }}
+              disabled={loading || otp.length < 6}
+              style={{ width: "100%", padding: "13px", background: loading || otp.length < 6 ? "rgba(14,165,233,0.5)" : "linear-gradient(135deg, #0ea5e9, #8b5cf6)", border: "none", borderRadius: "12px", color: "white", fontSize: "15px", fontWeight: 600, cursor: loading || otp.length < 6 ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", marginTop: "4px" }}
             >
               {loading && <Loader2 style={{ width: "16px", height: "16px", animation: "spin 1s linear infinite" }} />}
               {loading ? "Verifying..." : "Verify & continue"}
