@@ -1,7 +1,16 @@
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import prisma from "@/lib/prisma";
 import BusinessCard from "@/components/card/BusinessCard";
 import { Metadata } from "next";
+
+// One DB call per request: generateMetadata and the page both need the
+// same business, and without cache() they each ran a separate query
+// (the card page was ~3s, and a transient failure in either query
+// 500'd the whole page).
+const getBusiness = cache(async (slug: string) => {
+  return prisma.business.findUnique({ where: { slug } });
+});
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -120,7 +129,7 @@ function extractCity(address?: string | null): string {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const business = await prisma.business.findUnique({ where: { slug } });
+  const business = await getBusiness(slug);
 
   if (!business) {
     return { title: "Not Found" };
@@ -199,9 +208,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CardPage({ params }: Props) {
   const { slug } = await params;
 
-  const business = await prisma.business.findFirst({ where: { slug, isActive: true } });
+  const business = await getBusiness(slug);
 
-  if (!business) {
+  if (!business || !business.isActive) {
     notFound();
   }
 

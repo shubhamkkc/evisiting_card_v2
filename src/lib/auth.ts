@@ -33,21 +33,18 @@ export async function getSession(): Promise<SessionInfo | null> {
 
   // Link by authUserId first, then by ownerEmail. The email match auto-links
   // businesses created before the Supabase Auth switch on the owner's first
-  // sign-in — the email OTP proves they own that inbox.
-  let business = await prisma.business.findUnique({
-    where: { authUserId: user.id },
+  // sign-in — the email OTP proves they own that inbox. One query instead
+  // of two sequential lookups (each pooler round-trip costs ~1s on a cold
+  // function, which is what made login feel slow).
+  let business = await prisma.business.findFirst({
+    where: { OR: [{ authUserId: user.id }, { ownerEmail: user.email }] },
   });
 
-  if (!business) {
-    business = await prisma.business.findUnique({
-      where: { ownerEmail: user.email },
+  if (business && !business.authUserId) {
+    business = await prisma.business.update({
+      where: { id: business.id },
+      data: { authUserId: user.id },
     });
-    if (business && !business.authUserId) {
-      business = await prisma.business.update({
-        where: { id: business.id },
-        data: { authUserId: user.id },
-      });
-    }
   }
 
   if (!business) {
