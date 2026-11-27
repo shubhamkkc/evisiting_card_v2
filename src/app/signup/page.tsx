@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2, Building2, Mail, Lock, ShieldCheck } from "lucide-react";
+import { Loader2, Building2, Mail, Lock, ShieldCheck, Eye, EyeOff } from "lucide-react";
 
 type Step = "form" | "otp";
 
@@ -12,7 +12,7 @@ export default function SignupPage() {
   const [step, setStep] = useState<Step>("form");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
@@ -41,10 +41,6 @@ export default function SignupPage() {
 
     if (password.length < 6) {
       setError("Password must be at least 6 characters.");
-      return;
-    }
-    if (password !== confirm) {
-      setError("Passwords do not match.");
       return;
     }
 
@@ -192,29 +188,22 @@ export default function SignupPage() {
               <div style={{ position: "relative" }}>
                 <Lock style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)", width: "16px", height: "16px" }} />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
                   minLength={6}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="At least 6 characters"
-                  style={{ width: "100%", padding: "12px 16px 12px 42px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", color: "white", fontSize: "14px", outline: "none", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "12px 42px 12px 42px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", color: "white", fontSize: "14px", outline: "none", boxSizing: "border-box" }}
                 />
-              </div>
-            </div>
-            <div>
-              <label style={{ display: "block", color: "rgba(255,255,255,0.7)", fontSize: "13px", fontWeight: 500, marginBottom: "8px" }}>Confirm password</label>
-              <div style={{ position: "relative" }}>
-                <Lock style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)", width: "16px", height: "16px" }} />
-                <input
-                  type="password"
-                  required
-                  minLength={6}
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  placeholder="Repeat your password"
-                  style={{ width: "100%", padding: "12px 16px 12px 42px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "12px", color: "white", fontSize: "14px", outline: "none", boxSizing: "border-box" }}
-                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.5)", display: "flex", padding: "4px" }}
+                >
+                  {showPassword ? <EyeOff style={{ width: "18px", height: "18px" }} /> : <Eye style={{ width: "18px", height: "18px" }} />}
+                </button>
               </div>
             </div>
             <button
