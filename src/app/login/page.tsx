@@ -1,16 +1,19 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Lock } from "lucide-react";
 
-export default function LoginPage() {
-  const [email, setEmail] = useState("");
+function LoginForm() {
+  const searchParams = useSearchParams();
+  // Pre-filled when signup redirects an already-registered user here.
+  const [email, setEmail] = useState(searchParams.get("email") ?? "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const alreadyRegistered = searchParams.get("already") === "1";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,27 +21,38 @@ export default function LoginPage() {
     setLoading(true);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      // Only stop loading on error — on success keep the button
-      // disabled + spinning until the redirect lands.
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        // Only stop loading on error — on success keep the button
+        // disabled + spinning until the redirect lands.
+        setLoading(false);
+        setError(
+          error.message === "Invalid login credentials"
+            ? "Invalid email or password"
+            : error.message === "Email not confirmed"
+              ? "Please verify your email first — check your inbox for the code."
+              : error.message
+        );
+        return;
+      }
+    } catch {
       setLoading(false);
-      setError(
-        error.message === "Invalid login credentials"
-          ? "Invalid email or password"
-          : error.message === "Email not confirmed"
-            ? "Please verify your email first — check your inbox for the code."
-            : error.message
-      );
+      setError("Sign-in failed. Please check your connection and try again.");
       return;
     }
 
-    const res = await fetch("/api/auth/session");
-    const data = await res.json().catch(() => ({}));
-    if (data.role === "admin") router.push("/admin/dashboard");
-    else if (data.role === "owner") router.push("/owner/dashboard");
-    else router.push("/owner/create");
+    try {
+      const res = await fetch("/api/auth/session", {
+        signal: AbortSignal.timeout(15000),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data.role === "admin") router.push("/admin/dashboard");
+      else if (data.role === "owner") router.push("/owner/dashboard");
+      else router.push("/owner/create");
+    } catch {
+      router.push("/owner/create");
+    }
   };
 
   return (
@@ -51,6 +65,12 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-gray-900">Admin Login</h1>
           <p className="text-sm text-gray-500 mt-2">Sign in to manage your digital cards</p>
         </div>
+
+        {alreadyRegistered && (
+          <div className="p-3 bg-blue-50 border border-blue-100 text-blue-700 text-sm rounded-lg mb-6 text-center">
+            Your account already exists. Please log in with your password.
+          </div>
+        )}
 
         {error && (
           <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg mb-6 text-center">
@@ -97,5 +117,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

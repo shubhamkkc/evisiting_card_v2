@@ -26,12 +26,30 @@ export default function SignupPage() {
     return () => clearTimeout(t);
   }, [cooldown]);
 
+  // A promise that rejects after `ms` so a stalled network call can never
+  // leave a button spinning forever with no error (the OTP verify hang).
+  function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+    let timer: ReturnType<typeof setTimeout>;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`${label} timed out. Please try again.`)), ms);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer!));
+  }
+
   async function redirectByRole() {
-    const res = await fetch("/api/auth/session");
-    const data = await res.json().catch(() => ({}));
-    if (data.role === "admin") router.push("/admin/dashboard");
-    else if (data.role === "owner") router.push("/owner/dashboard");
-    else router.push("/owner/create");
+    try {
+      const res = await fetch("/api/auth/session", {
+        signal: AbortSignal.timeout(15000),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (data.role === "admin") router.push("/admin/dashboard");
+      else if (data.role === "owner") router.push("/owner/dashboard");
+      else router.push("/owner/create");
+    } catch {
+      // Session check failed but sign-in/verify already succeeded — the
+      // create page will sort out the role itself. Never hang here.
+      router.push("/owner/create");
+    }
   }
 
   async function handleSignup(e: React.FormEvent) {
@@ -46,7 +64,21 @@ export default function SignupPage() {
 
     setLoading(true);
     const supabase = createClient();
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    let data: { session: unknown } | null = null;
+    let error: { message: string } | null = null;
+    try {
+      const result = await withTimeout(
+        supabase.auth.signUp({ email, password }),
+        20000,
+        "Signup"
+      );
+      data = result.data;
+      error = result.error;
+    } catch (err) {
+      setLoading(false);
+      setError(err instanceof Error ? err.message : "Signup failed. Please try again.");
+      return;
+    }
 
     if (error) {
       // Only stop loading on error — on success keep the button
@@ -54,7 +86,11 @@ export default function SignupPage() {
       // click can't re-submit.
       setLoading(false);
       if (error.message.toLowerCase().includes("already registered")) {
-        setError("This email is already registered. Please log in instead.");
+        // Already registered → send them to login with the email
+        // pre-filled and a clear message, instead of a dead-end error.
+        router.push(
+          `/login?email=${encodeURIComponent(email)}&already=1`
+        );
       } else {
         setError(error.message);
       }
@@ -62,11 +98,12 @@ export default function SignupPage() {
     }
 
     // Email confirmation disabled on the project → already signed in.
-    if (data.session) {
+    if (data?.session) {
       await redirectByRole();
       return;
     }
 
+    setLoading(false);
     setStep("otp");
     setCooldown(60);
     setInfo(`We sent a verification code to ${email}. Enter it below to verify your email.`);
@@ -79,13 +116,27 @@ export default function SignupPage() {
     setLoading(true);
 
     const supabase = createClient();
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token: otp.trim(),
-      type: "signup",
-    });
+    let data: { session: unknown } | null = null;
+    let error: { message: string } | null = null;
+    try {
+      const result = await withTimeout(
+        supabase.auth.verifyOtp({
+          email,
+          token: otp.trim(),
+          type: "signup",
+        }),
+        20000,
+        "Verification"
+      );
+      data = result.data;
+      error = result.error;
+    } catch (err) {
+      setLoading(false);
+      setError(err instanceof Error ? err.message : "Verification failed. Please try again.");
+      return;
+    }
 
-    if (error || !data.session) {
+    if (error || !data?.session) {
       // Only stop loading on error — on success keep the button
       // disabled + spinning until the redirect lands. The token is
       // single-use: a second click here used to fail with
@@ -107,14 +158,23 @@ export default function SignupPage() {
     setInfo("");
     setResending(true);
     const supabase = createClient();
-    const { error } = await supabase.auth.resend({ type: "signup", email });
-    setResending(false);
-    if (error) {
-      setError(error.message);
-      return;
+    try {
+      const { error } = await withTimeout(
+        supabase.auth.resend({ type: "signup", email }),
+        20000,
+        "Resend"
+      );
+      if (error) {
+        setError(error.message);
+        return;
+      }
+      setCooldown(60);
+      setInfo(`A new code was sent to ${email}.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not resend the code. Please try again.");
+    } finally {
+      setResending(false);
     }
-    setCooldown(60);
-    setInfo(`A new code was sent to ${email}.`);
   }
 
   return (
