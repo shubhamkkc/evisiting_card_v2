@@ -63,42 +63,65 @@ export default function SignupPage() {
     }
 
     setLoading(true);
-    const supabase = createClient();
-    let data: { session: unknown } | null = null;
-    let error: { message: string } | null = null;
+    // Signed up server-side (/api/auth/signup): Supabase's client-side
+    // signUp returns a fake success for an already-registered email, so
+    // the page could never tell the user their account already exists.
+    // The route checks auth.users first and reports it.
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 20000);
+    let result: {
+      alreadyRegistered?: boolean;
+      needsOtp?: boolean;
+      session?: boolean;
+      error?: string;
+    };
     try {
-      const result = await withTimeout(
-        supabase.auth.signUp({ email, password }),
-        20000,
-        "Signup"
-      );
-      data = result.data;
-      error = result.error;
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+        signal: ctrl.signal,
+      });
+      result = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setLoading(false);
+        if (
+          typeof result.error === "string" &&
+          result.error.toLowerCase().includes("already registered")
+        ) {
+          // Already registered → send them to login with the email
+          // pre-filled and a clear message, instead of a dead-end error.
+          router.push(
+            `/login?email=${encodeURIComponent(email)}&already=1`
+          );
+        } else {
+          setError(result.error || "Signup failed. Please try again.");
+        }
+        return;
+      }
     } catch (err) {
       setLoading(false);
-      setError(err instanceof Error ? err.message : "Signup failed. Please try again.");
+      setError(
+        err instanceof DOMException && err.name === "AbortError"
+          ? "Signup timed out. Please try again."
+          : "Signup failed. Please try again."
+      );
       return;
+    } finally {
+      clearTimeout(timer);
     }
 
-    if (error) {
+    if (result.alreadyRegistered) {
       // Only stop loading on error — on success keep the button
       // disabled + spinning until the redirect lands, so a second
       // click can't re-submit.
       setLoading(false);
-      if (error.message.toLowerCase().includes("already registered")) {
-        // Already registered → send them to login with the email
-        // pre-filled and a clear message, instead of a dead-end error.
-        router.push(
-          `/login?email=${encodeURIComponent(email)}&already=1`
-        );
-      } else {
-        setError(error.message);
-      }
+      router.push(`/login?email=${encodeURIComponent(email)}&already=1`);
       return;
     }
 
     // Email confirmation disabled on the project → already signed in.
-    if (data?.session) {
+    if (result.session) {
       await redirectByRole();
       return;
     }
