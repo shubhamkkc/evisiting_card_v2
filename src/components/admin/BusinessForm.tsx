@@ -55,6 +55,7 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
       googleMapsUrl: "", logo: "", coverPhoto: "", about: "", category: "",
       brandPalette: "",
       yearEstd: "", theme: "theme1", themeColor: "#0ea5e9", isActive: true,
+      plan: "paid",
       showCardViews: true,
       ownerEmail: "",
       socialLinks: [
@@ -446,6 +447,14 @@ export default function BusinessForm({ initialData }: { initialData?: any }) {
             </label>
           </div>
 
+          <div>
+             <label className="block text-sm font-medium text-gray-700 mb-1">Plan (free-tier limits)</label>
+             <select className="block w-full rounded-lg border-gray-300 px-4 py-2 border bg-white focus:ring-2 focus:ring-blue-500" value={formData.plan || "free"} onChange={e => setFormData({...formData, plan: e.target.value})}>
+               <option value="free">Free — Theme 1 only, 1 service, 2 gallery, 2 links, no cover / review widget</option>
+               <option value="paid">Paid (₹499/year) — all themes (6+), 10 services, 30 gallery, unlimited links</option>
+             </select>
+             <p className="mt-1 text-xs text-gray-500">Only an admin can change the plan — owners cannot upgrade themselves. Set Paid after payment is received.</p>
+          </div>
           <div>
              <label className="block text-sm font-medium text-gray-700 mb-1">Theme Template</label>
              <select className="block w-full rounded-lg border-gray-300 px-4 py-2 border bg-white focus:ring-2 focus:ring-blue-500" value={formData.theme} onChange={e => setFormData({...formData, theme: e.target.value})}>

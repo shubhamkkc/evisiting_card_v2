@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { getPlanLimits, parseJsonArray } from "@/lib/plan";
 
-// Fields an owner is NOT allowed to change
-const ADMIN_ONLY_FIELDS = ["isActive", "ownerEmail", "ownerPassword", "slug", "id", "createdAt", "updatedAt"];
+// Fields an owner is NOT allowed to change — "plan" is here so an owner
+// can never self-upgrade to "paid" by sending plan:"paid" in a PUT body;
+// only an admin can change the plan (after payment).
+const ADMIN_ONLY_FIELDS = ["isActive", "ownerEmail", "ownerPassword", "slug", "id", "createdAt", "updatedAt", "plan"];
 
 function slugify(text: string) {
   return text
@@ -16,7 +19,8 @@ function slugify(text: string) {
 }
 
 // POST /api/owner/business — self-serve: a signed-in user creates their
-// first (and only) business card. Plan is "free", theme is Theme 6.
+// first (and only) business card. Plan is "free", theme is Theme 1
+// (the only free theme — see src/lib/plan.ts).
 export async function POST(req: Request) {
   try {
     const session = await getSession();
@@ -76,7 +80,7 @@ export async function POST(req: Request) {
         authUserId: session.user.id,
         category: (body?.category ?? "").trim() || null,
         plan: "free",
-        theme: "theme6",
+        theme: "theme1",
         isActive: true,
       },
     });
@@ -127,22 +131,49 @@ export async function PUT(req: Request) {
       }
     }
 
-    // Validate limits (30 gallery images, 10 services)
+    // Free-tier limits, enforced server-side (the form caps are UI only).
+    // Only *adding* beyond a limit is blocked, so a business that already
+    // has more (e.g. a demo card) can still save while trimming down.
+    const business = await prisma.business.findUnique({ where: { id: businessId } });
+    if (!business) return NextResponse.json({ error: "Not Found" }, { status: 404 });
+    const limits = getPlanLimits(business.plan);
+    const paidNote = " Upgrade to Paid (₹499/year) to unlock it.";
     try {
+      if (safeData.theme && !limits.themes.includes(safeData.theme) && safeData.theme !== business.theme) {
+        return NextResponse.json({ error: `This theme is a Paid feature.${paidNote}` }, { status: 400 });
+      }
       if (safeData.gallery) {
-        const parsedGallery = JSON.parse(safeData.gallery);
-        if (Array.isArray(parsedGallery) && parsedGallery.length > 30) {
-          return NextResponse.json({ error: "Maximum of 30 gallery images allowed." }, { status: 400 });
+        const gallery = parseJsonArray(safeData.gallery);
+        const existing = parseJsonArray(business.gallery).length;
+        if (gallery.length > limits.maxGallery && gallery.length > existing) {
+          return NextResponse.json({ error: `Free plan allows up to ${limits.maxGallery} gallery images.${paidNote}` }, { status: 400 });
         }
       }
       if (safeData.services) {
-        const parsedServices = JSON.parse(safeData.services);
-        if (Array.isArray(parsedServices) && parsedServices.length > 10) {
-          return NextResponse.json({ error: "Maximum of 10 products & services allowed." }, { status: 400 });
+        const services = parseJsonArray(safeData.services);
+        const existing = parseJsonArray(business.services).length;
+        if (services.length > limits.maxServices && services.length > existing) {
+          return NextResponse.json({ error: `Free plan allows up to ${limits.maxServices} services.${paidNote}` }, { status: 400 });
         }
       }
+      if (safeData.socialLinks) {
+        const links = parseJsonArray(safeData.socialLinks);
+        const existing = parseJsonArray(business.socialLinks).length;
+        if (links.length > limits.maxSocialLinks && links.length > existing) {
+          return NextResponse.json({ error: `Free plan allows up to ${limits.maxSocialLinks} social links.${paidNote}` }, { status: 400 });
+        }
+      }
+      if (!limits.coverPhoto && safeData.coverPhoto && safeData.coverPhoto !== business.coverPhoto) {
+        return NextResponse.json({ error: `Cover photo is a Paid feature.${paidNote}` }, { status: 400 });
+      }
+      if (!limits.googleReviewWidget && safeData.googleReviewWidget && safeData.googleReviewWidget !== business.googleReviewWidget) {
+        return NextResponse.json({ error: `Google Review widget is a Paid feature.${paidNote}` }, { status: 400 });
+      }
     } catch (e) {
-      return NextResponse.json({ error: "Invalid JSON format for gallery or services." }, { status: 400 });
+      if (e instanceof SyntaxError) {
+        return NextResponse.json({ error: "Invalid JSON format for gallery or services." }, { status: 400 });
+      }
+      throw e;
     }
 
     const updated = await prisma.business.update({

@@ -8,7 +8,7 @@ const jsonLd = {
   "name": "GrowX Digital Card",
   "url": "https://card.growxdigitech.com",
   "description": "Digital business card service by GrowX Digitech for businesses worldwide",
-  "priceRange": "₹499/year or $9/year",
+  "priceRange": "Free / ₹499/year or $9/year",
   "areaServed": "Worldwide",
   "serviceType": "Digital Business Card",
 };
@@ -32,13 +32,14 @@ export default function Home() {
               </span>
             </div>
             <div className="flex items-center gap-4">
+              <Link href="#pricing" className="hidden text-sm font-medium text-white/70 transition-colors hover:text-white sm:block">
+                Pricing
+              </Link>
               <Link
-                href={whatsappUrl}
-                target="_blank"
-                rel="noreferrer"
+                href="/signup"
                 className="bg-white px-3 py-2 text-xs font-bold uppercase tracking-wide text-gx-night rounded-lg shadow-sm transition-colors hover:bg-gx-lime sm:px-4 sm:text-sm"
               >
-                Chat on WhatsApp
+                Create Free Card
               </Link>
             </div>
           </div>
@@ -57,34 +58,40 @@ export default function Home() {
               Digital Visiting Card · By GrowX Digitech
             </p>
             <h1 className="mb-8 font-gx-display text-5xl font-bold tracking-tight md:text-7xl">
-              Create Your{" "}
-              <span className="inline-block rounded-md bg-gx-lime px-3 text-gx-night">Digital</span>{" "}
-              <br className="hidden md:block" />
-              Business Card
+              One link. Your business.{" "}
+              <span className="inline-block rounded-md bg-gx-lime px-3 text-gx-night">Your whole world.</span>
             </h1>
             <p className="mx-auto mb-4 max-w-2xl text-xl font-medium text-white/70">
-              Message us on WhatsApp and we will create your digital business card for you. No public self-signup, just direct support and fast setup.
+              Bring everything you share into one place — your contact, services, photos, reviews and links, on one digital card.
             </p>
-            <p className="mx-auto mb-10 max-w-2xl text-base text-white/50">
-              We create digital business cards for local businesses — electricians, photographers, CA firms, shops, and more, worldwide.
+            <p className="mx-auto mb-8 max-w-2xl text-base text-white/50">
+              For clinics, salons, photographers, shops, CA firms and more, worldwide. Free plan available — set up in minutes, no app needed.
             </p>
+            <div className="mx-auto mb-10 flex max-w-md items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-white/80">
+              <span className="text-white/50">card.growxdigitech.com/</span>
+              <span className="font-bold text-white">your-business</span>
+            </div>
             <div className="flex flex-col justify-center gap-4 sm:flex-row">
               <Link
-                href={whatsappUrl}
-                target="_blank"
-                rel="noreferrer"
+                href="/signup"
                 className="flex items-center justify-center gap-2 rounded-lg bg-white px-8 py-4 text-base font-bold uppercase tracking-wide text-gx-night shadow-xl transition-all hover:bg-gx-lime"
               >
-                Chat on WhatsApp <ArrowRight className="h-5 w-5" />
+                Create Free Card <ArrowRight className="h-5 w-5" />
               </Link>
               <Link href="#demos" className="flex items-center justify-center rounded-lg border border-white/10 bg-white/10 px-8 py-4 text-base font-bold uppercase tracking-wide text-white transition-colors hover:bg-white/20">
                 View Demos
               </Link>
             </div>
+            <p className="mt-6 text-sm text-white/50">
+              Prefer help setting it up?{" "}
+              <Link href={whatsappUrl} target="_blank" rel="noreferrer" className="font-semibold text-gx-lime hover:underline">
+                Chat on WhatsApp
+              </Link>
+            </p>
           </div>
 
-          {/* Mock Graphic */}
-          <div className="relative mx-auto mt-20 max-w-5xl">
+          {/* Mock Graphic — live card previews */}
+          <div id="demos" className="relative mx-auto mt-20 max-w-5xl">
             <div className="relative flex flex-col items-center justify-center gap-12 perspective-[1000px] md:flex-row md:items-end md:gap-8">
               <Link href="/first-beat-studio" className="z-10 block h-[580px] w-full max-w-[280px] transform cursor-pointer rounded-[2.5rem] border-[6px] border-white/15 bg-gx-canvas p-2 shadow-2xl transition-all duration-300 hover:z-30 md:w-[280px] md:translate-y-12 md:rotate-[5deg] md:hover:rotate-1 md:hover:translate-y-6 md:hover:scale-105">
                 <div className="relative h-full w-full overflow-hidden rounded-[2rem] bg-white shadow-inner">
@@ -143,6 +150,34 @@ export default function Home() {
           </div>
         </section> */}
 
+        {/* One Single Link + 4 Easy Steps — vkardz-style flow, GrowX copy */}
+        <section className="border-t border-gx-hairline py-24">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto mb-16 max-w-2xl text-center">
+              <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-white/50">
+                Link in Bio &amp; Digital Profile
+              </p>
+              <h2 className="mb-4 font-gx-display text-3xl font-bold md:text-4xl">One Single Link to Share Your Entire Business</h2>
+              <p className="text-lg text-white/70">Turn your Instagram bio into a digital visiting card &amp; storefront. Connect, share, and grow your audience — from one link.</p>
+            </div>
+
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+              {[
+                { step: "01", title: "Create & Personalize Your Card", desc: "Pick a theme — 6+ on Paid, Theme 1 free. Add your logo and your card's colours come from it, plus your bio and contact, in minutes." },
+                { step: "02", title: "Add Links, Services & Photos", desc: "Phone, WhatsApp, Instagram, YouTube, services, gallery and your Google Review link — everything a customer needs, in one place." },
+                { step: "03", title: "Share Anywhere via Link & QR", desc: "Put your link in your Instagram bio, WhatsApp or email signature, or share it instantly with a QR code — on your shop counter or a printed card." },
+                { step: "04", title: "Track & Convert Visitors", desc: "See card views and link clicks, and let customers call, WhatsApp or leave a Google Review straight from your card." },
+              ].map((s, i) => (
+                <div key={i} className="rounded-3xl border border-gx-hairline bg-gx-canvas p-8 shadow-sm transition-all hover:shadow-xl">
+                  <div className="mb-6 font-gx-display text-2xl font-black text-gx-orange">{s.step}</div>
+                  <h3 className="mb-3 font-gx-display text-xl font-bold">{s.title}</h3>
+                  <p className="text-[15px] leading-relaxed text-white/70">{s.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Features */}
         <section className="bg-gx-canvas py-24 pb-32">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -200,32 +235,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* How It Works */}
-        <section className="border-t border-gx-hairline py-24">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="mb-20 text-center">
-              <h2 className="font-gx-display text-3xl font-bold">How it works</h2>
-            </div>
-
-            <div className="relative grid gap-12 md:grid-cols-3">
-              <div className="absolute top-[60px] right-[15%] left-[15%] z-0 hidden h-0.5 bg-gradient-to-r from-gx-orange/10 via-gx-orange to-gx-orange/10 md:block"></div>
-              {[
-                { step: "01", title: "Message on WhatsApp", desc: "Send us your business name, contact details, logo, and photos." },
-                { step: "02", title: "We Build Your Card", desc: "We create the design, add your branding, and set up your custom card." },
-                { step: "03", title: "Start Sharing", desc: "Once ready, you receive your live link and QR code to share instantly." }
-              ].map((s, i) => (
-                <div key={i} className="relative z-10 flex flex-col items-center text-center">
-                  <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full border-8 border-gx-night bg-gx-canvas text-2xl font-black text-gx-orange shadow-md">
-                    {s.step}
-                  </div>
-                  <h3 className="mb-3 font-gx-display text-xl font-bold">{s.title}</h3>
-                  <p className="px-4 text-white/70">{s.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* Pricing */}
         <section id="pricing" className="bg-gx-canvas py-24 text-white">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -234,24 +243,54 @@ export default function Home() {
               <p className="text-white/70">Upgrade your networking game forever.</p>
             </div>
 
-            <div className="mx-auto max-w-lg">
+            <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">
+               {/* Free */}
                <div className="relative flex flex-col rounded-3xl border border-gx-hairline bg-gx-night p-8 shadow-2xl">
+                  <h3 className="mb-2 font-gx-display text-2xl font-bold">Free</h3>
+                  <p className="mb-6 text-white/70">Try your card before you pay</p>
+                  <div className="mb-8 text-4xl font-black">₹0<span className="text-lg font-medium text-white/60"> — free forever</span></div>
+                  <ul className="mb-8 flex-1 space-y-4">
+                    {[
+                      '1 Custom Digital Card Link',
+                      'Theme 1 only',
+                      'All Contact Fields',
+                      '1 Service',
+                      'Image Gallery (up to 2 images)',
+                      'Social Media Links (up to 2)',
+                      'vCard Download',
+                      'Dynamic QR Code'
+                    ].map((c, i) => (
+                      <li key={i} className="flex items-start gap-3 text-white/85">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-gx-lime" />
+                        <span>{c}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mb-8 -mt-4 text-sm text-white/50">No cover photo, no Google Review widget, no other themes — those are Paid.</p>
+                  <Link
+                    href="/signup"
+                    className="block w-full rounded-lg border border-white/20 bg-white/10 py-4 text-center font-bold uppercase tracking-wide text-white shadow-xl transition hover:bg-white/20"
+                  >
+                    Create Free Card
+                  </Link>
+               </div>
+
+               {/* Paid */}
+               <div className="relative flex flex-col rounded-3xl border border-gx-orange bg-gx-night p-8 shadow-2xl">
                   <div className="absolute top-0 right-8 -translate-y-1/2 transform rounded-full bg-gx-orange px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">Most Popular</div>
-                  <h3 className="mb-2 font-gx-display text-2xl font-bold">Standard</h3>
-                  <p className="mb-6 text-white/70">Everything you need to grow your business</p>
+                  <h3 className="mb-2 font-gx-display text-2xl font-bold">Paid</h3>
+                  <p className="mb-6 text-white/70">Everything in Free, plus the full card</p>
                   <div className="mb-8 text-4xl font-black">₹499<span className="text-lg font-medium text-white/60">/year</span></div>
                   <p className="mb-8 -mt-4 text-sm text-white/60">Outside India: <span className="font-bold text-white">$9/year</span> — same card, same features.</p>
                   <ul className="mb-8 flex-1 space-y-4">
                     {[
-                      '1 Custom Digital Card Link',
-                      'All Contact Fields',
-                      'Social Media Links',
-                      'vCard Download',
-                      'Dynamic QR Code',
+                      'All themes (6+) — including any new theme we launch in future',
                       'Product & Services Catalog (up to 10 services)',
                       'Image Gallery (up to 30 images)',
+                      'Social Media Links (unlimited)',
+                      'Cover Photo',
+                      'Google Review Widget',
                       'Customer Enquiry Form',
-                      'Premium Themes',
                       'NFC Card Integration'
                     ].map((c, i) => (
                       <li key={i} className="flex items-start gap-3 text-white/85">

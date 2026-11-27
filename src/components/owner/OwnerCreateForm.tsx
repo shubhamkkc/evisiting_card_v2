@@ -151,7 +151,7 @@ export default function OwnerCreateForm() {
       </button>
 
       <p style={{ textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: "12px", margin: 0 }}>
-        Free plan — you can add services, photos and links after creating your card.
+        Free plan — Theme 1, 1 service, 2 photos and 2 links. Paid (₹499/year) unlocks all themes (6+) and full limits.
       </p>
 
       <style>{`

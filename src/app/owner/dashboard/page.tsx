@@ -57,6 +57,12 @@ export default async function OwnerDashboardPage() {
           <p style={{ color: "#64748b", fontSize: "15px", margin: 0 }}>
             Manage your digital business card from here.
           </p>
+          <p style={{ margin: "10px 0 0", fontSize: "13px", color: "#374151" }}>
+            Plan: <strong>{business.plan === "paid" ? "Paid — ₹499/year" : "Free"}</strong>
+            {business.plan !== "paid" && (
+              <> · <a href="/#pricing" style={{ color: "#0ea5e9", fontWeight: 700 }}>Upgrade to Paid — ₹499/year</a> for all themes (6+), 10 services, 30 photos, cover photo &amp; review widget.</>
+            )}
+          </p>
         </div>
 
         {/* Status Banner */}

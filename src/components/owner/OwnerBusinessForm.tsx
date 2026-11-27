@@ -5,11 +5,15 @@ import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import { Loader2, Image as ImageIcon, Upload, Plus, Trash2 } from "lucide-react";
 import imageCompression from "browser-image-compression";
+import { getPlanLimits, isPaidPlan } from "@/lib/plan";
 
 export default function OwnerBusinessForm({ initialData }: { initialData: any }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
+  // Free-tier limits for this card (server enforces the same in the API).
+  const limits = getPlanLimits(initialData.plan);
+  const isPaid = isPaidPlan(initialData.plan);
 
   const [formData, setFormData] = useState(() => {
     const parseJson = (val: any) => {
@@ -211,6 +215,7 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
 
     // Remove fields owners cannot change (just in case)
     delete submitData.id;
+    delete submitData.plan;
     delete submitData.slug;
     delete submitData.isActive;
     delete submitData.ownerEmail;
@@ -224,13 +229,19 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(submitData),
       });
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        // Show the server's message (e.g. a free-plan limit) instead of a
+        // generic error, so the owner knows what to trim or upgrade.
+        let msg = "Something went wrong. Please try again.";
+        try { msg = (await res.json()).error || msg; } catch { /* keep default */ }
+        throw new Error(msg);
+      }
       toast.success("Card updated successfully!");
       router.push("/owner/dashboard");
       router.refresh();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error("Something went wrong. Please try again.");
+      toast.error(error?.message || "Something went wrong. Please try again.");
     }
     setLoading(false);
   };
@@ -271,6 +282,15 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
     <>
       <Toaster />
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+
+        {/* Plan banner — what this card's plan allows */}
+        <div style={{ background: isPaid ? "linear-gradient(135deg, #dcfce7, #f0fdf4)" : "linear-gradient(135deg, #fef3c7, #fffbeb)", border: `1px solid ${isPaid ? "#86efac" : "#fcd34d"}`, borderRadius: "14px", padding: "14px 18px", fontSize: "13px", color: "#374151" }}>
+          {isPaid ? (
+            <><strong>Paid plan — ₹499/year.</strong> All themes (6+), up to 10 services, 30 gallery images, unlimited social links, cover photo and Google Review widget included.</>
+          ) : (
+            <><strong>Free plan.</strong> Theme 1 only, up to {limits.maxServices} service, {limits.maxGallery} gallery images and {limits.maxSocialLinks} social links. Cover photo, Google Review widget and other themes are Paid. <a href="/#pricing" style={{ color: "#0ea5e9", fontWeight: 700 }}>Upgrade to Paid — ₹499/year</a></>
+          )}
+        </div>
 
         {/* Basic Info */}
         <section style={{ background: "white", borderRadius: "16px", padding: "24px", border: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
@@ -336,8 +356,8 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
               <input type="text" style={inputStyle} value={formData.closingDay || ""} onChange={e => setFormData({ ...formData, closingDay: e.target.value })} placeholder="e.g. Sunday" />
             </div>
             <div style={{ gridColumn: "1 / -1" }}>
-              <label style={labelStyle}>Google Review Widget Code (e.g. Elfsight)</label>
-              <textarea rows={3} style={{ ...inputStyle, resize: "vertical", fontFamily: "monospace", fontSize: "12px" }} value={formData.googleReviewWidget || ""} onChange={e => setFormData({ ...formData, googleReviewWidget: e.target.value })} placeholder="Paste your 3rd-party widget iframe/script here..." />
+              <label style={labelStyle}>Google Review Widget Code (e.g. Elfsight) {!limits.googleReviewWidget && "🔒 Paid"}</label>
+              <textarea rows={3} disabled={!limits.googleReviewWidget} style={{ ...inputStyle, resize: "vertical", fontFamily: "monospace", fontSize: "12px", opacity: limits.googleReviewWidget ? 1 : 0.6 }} value={formData.googleReviewWidget || ""} onChange={e => setFormData({ ...formData, googleReviewWidget: e.target.value })} placeholder={limits.googleReviewWidget ? "Paste your 3rd-party widget iframe/script here..." : "Paid feature — upgrade to add a review widget."} />
               <p style={{ margin: "4px 0 0", fontSize: 12, color: "#64748b" }}>Tip: to show the “Rate Us on Google” button on Theme 6, add a Social Link with platform “Google Review” and your review URL below.</p>
             </div>
           </div>
@@ -348,12 +368,13 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
           <h2 style={sectionHeaderStyle}>Theme & Appearance</h2>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
             <div>
-              <label style={labelStyle}>Theme Template</label>
+              <label style={labelStyle}>Theme Template {!isPaid && "(Free: Theme 1 only)"}</label>
               <select style={{ ...inputStyle, appearance: "auto" }} value={formData.theme} onChange={e => setFormData({ ...formData, theme: e.target.value })}>
-                <option value="theme1">Clean Light (Theme 1)</option>
-                <option value="theme2">Dark Glass (Theme 2)</option>
-                <option value="theme3">Gradient Modern (Theme 3)</option>
-                <option value="theme4">Cinematic Dark (Theme 4)</option>
+                <option value="theme1" disabled={!limits.themes.includes("theme1")}>Clean Light (Theme 1){!limits.themes.includes("theme1") ? " 🔒 Paid" : ""}</option>
+                <option value="theme2" disabled={!limits.themes.includes("theme2")}>Dark Glass (Theme 2){!limits.themes.includes("theme2") ? " 🔒 Paid" : ""}</option>
+                <option value="theme3" disabled={!limits.themes.includes("theme3")}>Gradient Modern (Theme 3){!limits.themes.includes("theme3") ? " 🔒 Paid" : ""}</option>
+                <option value="theme4" disabled={!limits.themes.includes("theme4")}>Cinematic Dark (Theme 4){!limits.themes.includes("theme4") ? " 🔒 Paid" : ""}</option>
+                <option value="theme5" disabled={!limits.themes.includes("theme5")}>✨ Fluid Rainbow (Theme 5){!limits.themes.includes("theme5") ? " 🔒 Paid" : ""}</option>
                 <option value="theme6">🔗 Linktree Style (Theme 6)</option>
               </select>
             </div>
@@ -420,25 +441,29 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
               )}
             </div>
 
-            {/* Cover Photo */}
+            {/* Cover Photo — Paid feature */}
             <div>
-              <label style={labelStyle}>Cover Photo</label>
+              <label style={labelStyle}>Cover Photo {!limits.coverPhoto && "🔒 Paid"}</label>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 <div style={{ width: "100%", height: "72px", borderRadius: "12px", border: "2px dashed #e2e8f0", overflow: "hidden", background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   {formData.coverPhoto ? <img src={formData.coverPhoto} alt="Cover" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <ImageIcon style={{ color: "#cbd5e1", width: "24px", height: "24px" }} />}
                 </div>
-                <label style={{ cursor: "pointer", background: "#f1f5f9", border: "1px solid #e2e8f0", padding: "8px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 500, color: "#374151", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
-                  {uploading === "coverPhoto" ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : <Upload style={{ width: "14px", height: "14px" }} />}
-                  Upload
-                  <input type="file" style={{ display: "none" }} accept="image/*" onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0], "coverPhoto")} />
-                </label>
+                {limits.coverPhoto ? (
+                  <label style={{ cursor: "pointer", background: "#f1f5f9", border: "1px solid #e2e8f0", padding: "8px 14px", borderRadius: "8px", fontSize: "13px", fontWeight: 500, color: "#374151", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                    {uploading === "coverPhoto" ? <Loader2 style={{ width: "14px", height: "14px", animation: "spin 1s linear infinite" }} /> : <Upload style={{ width: "14px", height: "14px" }} />}
+                    Upload
+                    <input type="file" style={{ display: "none" }} accept="image/*" onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0], "coverPhoto")} />
+                  </label>
+                ) : (
+                  <p style={{ margin: 0, fontSize: "12px", color: "#64748b" }}>Cover photo is a Paid feature — <a href="/#pricing" style={{ color: "#0ea5e9", fontWeight: 700 }}>upgrade for ₹499/year</a>.</p>
+                )}
               </div>
             </div>
           </div>
 
           {/* Gallery */}
           <div style={{ marginTop: "20px" }}>
-            <label style={labelStyle}>Gallery Images</label>
+            <label style={labelStyle}>Gallery Images ({formData.gallery?.length || 0}/{limits.maxGallery}{!isPaid ? " — Free plan" : ""})</label>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))", gap: "10px" }}>
               {formData.gallery?.map((img: string, i: number) => (
                 <div key={i} style={{ position: "relative", aspectRatio: "1", borderRadius: "10px", overflow: "hidden", border: "1px solid #e2e8f0" }}>
@@ -449,16 +474,16 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
                   </button>
                 </div>
               ))}
-              {(!formData.gallery || formData.gallery.length < 30) && (
+              {(!formData.gallery || formData.gallery.length < limits.maxGallery) && (
                 <label style={{ cursor: "pointer", aspectRatio: "1", borderRadius: "10px", border: "2px dashed #e2e8f0", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontSize: "11px", fontWeight: 600 }}>
                   <Plus style={{ width: "20px", height: "20px", marginBottom: "4px" }} />
                   Add
-                  <input type="file" style={{ display: "none" }} multiple accept="image/*" onChange={e => { 
+                  <input type="file" style={{ display: "none" }} multiple accept="image/*" onChange={e => {
                     if (e.target.files) {
-                      const remaining = 30 - (formData.gallery?.length || 0);
+                      const remaining = limits.maxGallery - (formData.gallery?.length || 0);
                       const files = Array.from(e.target.files);
                       if (files.length > remaining) {
-                        toast.error(`You can only add ${remaining} more image(s). Maximum 30 allowed.`);
+                        toast.error(`You can only add ${remaining} more image(s). Maximum ${limits.maxGallery} allowed on your plan.`);
                       }
                       files.slice(0, remaining).forEach(f => handleFileUpload(f, "gallery"));
                     }
@@ -472,11 +497,13 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
         {/* Social Links */}
         <section style={{ background: "white", borderRadius: "16px", padding: "24px", border: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9" }}>
-            <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", margin: 0 }}>Social Media Links</h2>
-            <button type="button" onClick={() => setFormData((prev: any) => ({ ...prev, socialLinks: [...(prev.socialLinks || []), { platform: "facebook", url: "" }] }))}
-              style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "13px", fontWeight: 600, color: "#0ea5e9", background: "none", border: "1px solid #bae6fd", borderRadius: "8px", padding: "6px 12px", cursor: "pointer" }}>
-              <Plus style={{ width: "14px", height: "14px" }} /> Add Link
-            </button>
+            <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", margin: 0 }}>Social Media Links ({formData.socialLinks?.length || 0}/{Number.isFinite(limits.maxSocialLinks) ? limits.maxSocialLinks : "∞"})</h2>
+            {(!formData.socialLinks || formData.socialLinks.length < limits.maxSocialLinks) && (
+              <button type="button" onClick={() => setFormData((prev: any) => ({ ...prev, socialLinks: [...(prev.socialLinks || []), { platform: "facebook", url: "" }] }))}
+                style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "13px", fontWeight: 600, color: "#0ea5e9", background: "none", border: "1px solid #bae6fd", borderRadius: "8px", padding: "6px 12px", cursor: "pointer" }}>
+                <Plus style={{ width: "14px", height: "14px" }} /> Add Link
+              </button>
+            )}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             {formData.socialLinks?.map((link: any, i: number) => (
@@ -511,8 +538,8 @@ export default function OwnerBusinessForm({ initialData }: { initialData: any })
         {/* Services */}
         <section style={{ background: "white", borderRadius: "16px", padding: "24px", border: "1px solid #e2e8f0", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", paddingBottom: "10px", borderBottom: "1px solid #f1f5f9" }}>
-            <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", margin: 0 }}>Services & Products</h2>
-            {(!formData.services || formData.services.length < 10) && (
+            <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a", margin: 0 }}>Services & Products ({formData.services?.length || 0}/{limits.maxServices})</h2>
+            {(!formData.services || formData.services.length < limits.maxServices) && (
               <button type="button" onClick={() => setFormData((prev: any) => ({ ...prev, services: [...(prev.services || []), { title: "", description: "", image: "" }] }))}
                 style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "13px", fontWeight: 600, color: "#0ea5e9", background: "none", border: "1px solid #bae6fd", borderRadius: "8px", padding: "6px 12px", cursor: "pointer" }}>
                 <Plus style={{ width: "14px", height: "14px" }} /> Add Service
